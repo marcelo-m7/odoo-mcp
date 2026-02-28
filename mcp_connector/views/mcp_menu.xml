@@ -1,0 +1,4 @@
+<odoo>
+    <menuitem id="menu_mcp_root" name="MCP" sequence="10" groups="mcp_connector.group_mcp_user"/>
+    <menuitem id="menu_mcp_configuration" name="Configuration" parent="menu_mcp_root" sequence="50" groups="mcp_connector.group_mcp_manager"/>
+</odoo>
