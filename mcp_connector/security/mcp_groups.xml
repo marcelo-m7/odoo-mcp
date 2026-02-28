@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_mcp_user" model="res.groups">
+        <field name="name">MCP User</field>
+        <field name="category_id" ref="base.module_category_tools"/>
+    </record>
+
+    <record id="group_mcp_manager" model="res.groups">
+        <field name="name">MCP Manager</field>
+        <field name="category_id" ref="base.module_category_tools"/>
+        <field name="implied_ids" eval="[(4, ref('mcp_connector.group_mcp_user'))]"/>
+    </record>
+</odoo>

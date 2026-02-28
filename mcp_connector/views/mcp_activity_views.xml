@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mcp_activity_tree" model="ir.ui.view">
+        <field name="name">mcp.activity.log.tree</field>
+        <field name="model">mcp.activity.log</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="request_time"/>
+                <field name="user_id"/>
+                <field name="tool_id"/>
+                <field name="status"/>
+                <field name="duration_ms"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mcp_activity_form" model="ir.ui.view">
+        <field name="name">mcp.activity.log.form</field>
+        <field name="model">mcp.activity.log</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="request_time"/>
+                        <field name="user_id"/>
+                        <field name="tool_id"/>
+                        <field name="status"/>
+                        <field name="duration_ms"/>
+                        <field name="error_message"/>
+                        <field name="request_payload" widget="json"/>
+                        <field name="response_payload" widget="json"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mcp_activity" model="ir.actions.act_window">
+        <field name="name">Activity Logs</field>
+        <field name="res_model">mcp.activity.log</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="webapp_page" name="MCP Webapp Page">
+        <t t-call="website.layout">
+            <div class="container my-5">
+                <h1 t-esc="webapp.name"/>
+                <p class="text-muted">Slug: <span t-esc="webapp.slug"/></p>
+                <pre style="white-space: pre-wrap;"><code t-esc="webapp.code_js"/></pre>
+            </div>
+        </t>
+    </template>
+</odoo>

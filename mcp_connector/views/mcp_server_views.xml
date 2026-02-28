@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mcp_server_tree" model="ir.ui.view">
+        <field name="name">mcp.server.tree</field>
+        <field name="model">mcp.server</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="url"/>
+                <field name="rate_limit"/>
+                <field name="approval_required"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mcp_server_form" model="ir.ui.view">
+        <field name="name">mcp.server.form</field>
+        <field name="model">mcp.server</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="url"/>
+                        <field name="active"/>
+                        <field name="approval_required"/>
+                        <field name="rate_limit"/>
+                        <field name="manager_group_id"/>
+                    </group>
+                    <group>
+                        <field name="allowed_model_ids" widget="many2many_tags"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mcp_server" model="ir.actions.act_window">
+        <field name="name">MCP Servers</field>
+        <field name="res_model">mcp.server</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

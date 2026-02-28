@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mcp_approval_tree" model="ir.ui.view">
+        <field name="name">mcp.approval.tree</field>
+        <field name="model">mcp.approval</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="create_date"/>
+                <field name="operation"/>
+                <field name="requester_id"/>
+                <field name="tool_id"/>
+                <field name="state"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mcp_approval_form" model="ir.ui.view">
+        <field name="name">mcp.approval.form</field>
+        <field name="model">mcp.approval</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_approve" type="object" string="Approve" class="btn-primary" invisible="state != 'pending'"/>
+                    <button name="action_reject" type="object" string="Reject" invisible="state != 'pending'"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="operation"/>
+                        <field name="requester_id"/>
+                        <field name="approver_id"/>
+                        <field name="tool_id"/>
+                        <field name="payload" widget="json"/>
+                        <field name="rejection_reason"/>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mcp_approval" model="ir.actions.act_window">
+        <field name="name">Approvals</field>
+        <field name="res_model">mcp.approval</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
