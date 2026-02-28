@@ -1,23 +1,25 @@
 {
-    'name': "Database Connector",
-    'version': '1.0',
-    'depends': ['base'],
-    'author': "Marcelo Santos",
-    'company': "Corvanis",
-    'category': "Tools",
-    'license': 'LGPL-3',
-    'description': """
-This module provides a connector to external databases, allowing you to fetch and manipulate data from various sources directly within Odoo. It supports multiple database types, including MySQL, PostgreSQL, and SQL Server, enabling seamless integration with your existing data infrastructure.
-    """,
-    # data files always loaded at installation
-    # 'data': [
-    #     'views/mymodule_view.xml',
-    # ],
-    # data files containing optionally loaded demonstration data
-    # 'demo': [
-    #     'demo/demo_data.xml',
-    # ],
-    'installable': True,
-    'auto_install': False,
-    'application': True,
+    "name": "MCP Server - AI Integration for Odoo 19",
+    "summary": "AI-safe MCP toolkit for CRUD, analytics, dashboards, web apps and module generation.",
+    "version": "1.0.0",
+    "author": "Corvanis",
+    "company": "Corvanis",
+    "category": "Productivity",
+    "license": "LGPL-3",
+    "depends": ["base", "mail", "website", "portal", "web"],
+    "data": [
+        "security/mcp_security.xml",
+        "security/ir.model.access.csv",
+        "data/ir_cron_data.xml",
+        "views/mcp_server_views.xml",
+        "views/mcp_tool_views.xml",
+        "views/mcp_memory_views.xml",
+        "views/mcp_activity_log_views.xml",
+        "views/mcp_dashboard_views.xml",
+        "views/mcp_webapp_views.xml",
+        "views/mcp_menu.xml",
+    ],
+    "demo": [],
+    "installable": True,
+    "application": True,
 }
