@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="mcp_server_default" model="mcp.server">
+        <field name="name">Default MCP Server</field>
+        <field name="url">/mcp/jsonrpc</field>
+        <field name="active">True</field>
+        <field name="approval_required">False</field>
+        <field name="rate_limit">120</field>
+    </record>
+
+    <record id="mcp_tool_search" model="mcp.agent.tool">
+        <field name="name">Search Records</field>
+        <field name="technical_name">search_records</field>
+        <field name="model_name">ir.model</field>
+        <field name="method_name">search_read</field>
+        <field name="description">Search records from an allowed model using a safe domain.</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <record id="mcp_tool_create" model="mcp.agent.tool">
+        <field name="name">Create Record</field>
+        <field name="technical_name">create_record</field>
+        <field name="model_name">ir.model</field>
+        <field name="method_name">create</field>
+        <field name="description">Create a record with validated model and values.</field>
+        <field name="sequence">20</field>
+    </record>
+
+    <record id="mcp_tool_update" model="mcp.agent.tool">
+        <field name="name">Update Record</field>
+        <field name="technical_name">update_record</field>
+        <field name="model_name">ir.model</field>
+        <field name="method_name">write</field>
+        <field name="description">Update a record in an allowed model.</field>
+        <field name="sequence">30</field>
+    </record>
+
+    <record id="mcp_tool_delete" model="mcp.agent.tool">
+        <field name="name">Delete Record</field>
+        <field name="technical_name">delete_record</field>
+        <field name="model_name">ir.model</field>
+        <field name="method_name">unlink</field>
+        <field name="description">Delete a record in an allowed model.</field>
+        <field name="sequence">40</field>
+    </record>
+
+    <record id="mcp_tool_dashboard" model="mcp.agent.tool">
+        <field name="name">Generate Dashboard</field>
+        <field name="technical_name">generate_dashboard</field>
+        <field name="model_name">mcp.echart.dashboard</field>
+        <field name="method_name">create</field>
+        <field name="description">Generate and store ECharts dashboards from prompts.</field>
+        <field name="sequence">50</field>
+    </record>
+
+    <record id="mcp_tool_webapp" model="mcp.agent.tool">
+        <field name="name">Generate Web App</field>
+        <field name="technical_name">generate_web_app</field>
+        <field name="model_name">mcp.webapp</field>
+        <field name="method_name">create</field>
+        <field name="description">Generate and register lightweight web apps.</field>
+        <field name="sequence">60</field>
+    </record>
+</odoo>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_mcp_root" name="MCP Studio" sequence="10" groups="mcp_connector.group_mcp_user"/>
+
+    <menuitem id="menu_mcp_config" name="Configuration" parent="menu_mcp_root" sequence="10"/>
+    <menuitem id="menu_mcp_server" name="Servers" parent="menu_mcp_config" action="action_mcp_server"/>
+    <menuitem id="menu_mcp_tools" name="Tools" parent="menu_mcp_config" action="action_mcp_tool"/>
+
+    <menuitem id="menu_mcp_assets" name="Assets" parent="menu_mcp_root" sequence="20"/>
+    <menuitem id="menu_mcp_dashboards" name="Dashboards" parent="menu_mcp_assets" action="action_mcp_dashboard"/>
+    <menuitem id="menu_mcp_webapps" name="Web Apps" parent="menu_mcp_assets" action="action_mcp_webapp"/>
+
+    <menuitem id="menu_mcp_governance" name="Governance" parent="menu_mcp_root" sequence="30"/>
+    <menuitem id="menu_mcp_approvals" name="Approvals" parent="menu_mcp_governance" action="action_mcp_approval"/>
+    <menuitem id="menu_mcp_activity" name="Activity Logs" parent="menu_mcp_governance" action="action_mcp_activity"/>
+</odoo>

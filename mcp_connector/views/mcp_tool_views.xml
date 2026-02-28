@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_mcp_tool_tree" model="ir.ui.view">
+        <field name="name">mcp.agent.tool.tree</field>
+        <field name="model">mcp.agent.tool</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="technical_name"/>
+                <field name="model_name"/>
+                <field name="method_name"/>
+                <field name="sequence"/>
+                <field name="active"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_mcp_tool_form" model="ir.ui.view">
+        <field name="name">mcp.agent.tool.form</field>
+        <field name="model">mcp.agent.tool</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="technical_name"/>
+                        <field name="description"/>
+                        <field name="model_name"/>
+                        <field name="method_name"/>
+                        <field name="return_schema" widget="json"/>
+                        <field name="group_ids" widget="many2many_tags"/>
+                        <field name="sequence"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_mcp_tool" model="ir.actions.act_window">
+        <field name="name">MCP Tools</field>
+        <field name="res_model">mcp.agent.tool</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
