@@ -10,8 +10,10 @@ from mcp.server.fastmcp import FastMCP
 
 try:
     from .source_ast import inspect_odoo_source_content
+    from .addon_context import build_odoo_addon_context
 except ImportError:  # pragma: no cover - supports direct script execution during local setup.
     from source_ast import inspect_odoo_source_content
+    from addon_context import build_odoo_addon_context
 
 ODOO_VERSIONS = ["17.0", "18.0", "19.0"]
 # Legacy local docs path. Official docs links are the primary source now.
@@ -1144,6 +1146,45 @@ def inspect_odoo_source(
         path=path,
         query=query,
         scope=scope,
+        max_files=max_files,
+        env_source=configured_env_value("ODOO_SOURCE"),
+    )
+
+
+@mcp.tool()
+def read_odoo_addon_context(
+    addon: str,
+    addons_path: str = "",
+    path: str = "",
+    odoo_config: str = "",
+    include: str = "",
+    exclude_addons: list[str] | None = None,
+    no_exclude_addons: list[str] | None = None,
+    shrink_mode: str = "soft",
+    expand_models: list[str] | None = None,
+    add_expand_models: list[str] | None = None,
+    rm_expand_models: list[str] | None = None,
+    expand_methods: list[str] | None = None,
+    auto_expand: bool = True,
+    context_budget_tokens: int | None = None,
+    max_files: int = 200,
+) -> str:
+    """Read Odoo addon dependencies and source as a compact context dump."""
+    return build_odoo_addon_context(
+        addon=addon,
+        addons_path=addons_path,
+        path=path,
+        odoo_config=odoo_config,
+        include=include,
+        exclude_addons=exclude_addons,
+        no_exclude_addons=no_exclude_addons,
+        shrink_mode=shrink_mode,
+        expand_models=expand_models,
+        add_expand_models=add_expand_models,
+        rm_expand_models=rm_expand_models,
+        expand_methods=expand_methods,
+        auto_expand=auto_expand,
+        context_budget_tokens=context_budget_tokens,
         max_files=max_files,
         env_source=configured_env_value("ODOO_SOURCE"),
     )

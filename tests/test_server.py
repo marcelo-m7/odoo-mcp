@@ -62,6 +62,7 @@ def test_tools():
         "get_current_version",
         "detect_odoo_version",
         "inspect_odoo_source",
+        "read_odoo_addon_context",
         "get_odoo_local_context",
         "get_documentation_url",
         "search_documentation",
@@ -99,6 +100,7 @@ def test_tools():
     from odoo_mcp.server import (
         get_documentation_url,
         get_odoo_local_context,
+        read_odoo_addon_context,
         search_documentation,
         create_upgrade_script,
         explain_odoo_error,
@@ -198,6 +200,13 @@ class DemoController(http.Controller):
             source_inspection = inspect_odoo_source(path=str(source_root), scope="both", max_files=50)
             query_inspection = inspect_odoo_source(path=str(source_root), query="demo.model", scope="addons", max_files=50)
             limited_inspection = inspect_odoo_source(path=str(source_root), scope="addons", max_files=1)
+            addon_context = read_odoo_addon_context(
+                addon="demo_module",
+                path=str(source_root / "custom_addons"),
+                include="controller,security",
+                shrink_mode="soft",
+                max_files=20,
+            )
         assert "ODOO_SOURCE" in result
         assert "ODOO_BASE_COMMAND" in result
         assert "ODOO_TOOL_README" in result
@@ -231,6 +240,49 @@ class DemoController(http.Controller):
         assert "DemoModel" in query_inspection
         assert "DemoController" not in query_inspection
         assert "Files skipped by limit" in limited_inspection
+        assert "# Odoo Addon Context" in addon_context
+        assert "`demo_module`" in addon_context
+        assert "__manifest__.py" in addon_context
+        assert "DemoModel" in addon_context
+        assert "`demo.model`" in addon_context
+        assert "def _compute_total" in addon_context
+        assert "Missing addons: base" in addon_context
+        from odoo_mcp.addon_context import shrink_python_source
+        method_context = shrink_python_source(
+            '''from odoo import models
+
+
+class AccountMove(models.Model):
+    _name = "account.move"
+
+    def _post(self):
+        self._check_balanced()
+        return self._synchronize()
+
+    def _check_balanced(self):
+        return True
+
+    def _synchronize(self):
+        self._finalize()
+        return True
+
+    def _finalize(self):
+        return True
+
+    def _noise(self):
+        return "ignored"
+''',
+            Path("account_move.py"),
+            "hard",
+            set(),
+            set(),
+            {"account.move._post"},
+        )
+        assert "def _post" in method_context
+        assert "def _check_balanced" in method_context
+        assert "def _synchronize" in method_context
+        assert "def _finalize" in method_context
+        assert "def _noise" not in method_context
     finally:
         for name, value in previous_env.items():
             if value is None:

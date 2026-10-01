@@ -30,7 +30,7 @@ try:
         'mcp', 'ODOO_VERSIONS', 'current_version',
         'get_all_rst_files', 'get_documentation_index',
         'get_documentation_content', 'get_development_rules',
-        'set_odoo_version', 'get_current_version', 'get_odoo_local_context', 'get_documentation_url',
+        'set_odoo_version', 'get_current_version', 'read_odoo_addon_context', 'get_odoo_local_context', 'get_documentation_url',
         'search_documentation', 'get_development_guidelines', 'create_upgrade_script',
         'explain_odoo_error', 'plan_odoo_feature', 'plan_owl_feature',
         'create_base_automation', 'create_owl_component',

@@ -8,6 +8,7 @@ A Model Context Protocol (MCP) server for Odoo module development with AI assist
 
 - **📚 Official Documentation Links**: Version-aware links to Odoo's developer reference at `https://www.odoo.com/documentation/<version>/developer/reference.html`
 - **🧭 Skill-Informed Odoo Guardrails**: Built-in guidance learned from [mart337i/odoo-skills](https://github.com/mart337i/odoo-skills) without requiring that repo at runtime
+- **🗺️ Addon Context Dumps**: Dependency maps, schema summaries, and shrunk `# FILEPATH` source dumps for local Odoo addons
 - **🔧 Version-Aware Code Generation**: All generated code includes version info and relevant documentation links
 - **🦉 OWL Frontend Scaffolds**: Generate Odoo OWL components, client actions, field widgets, services, and frontend tests
 - **📋 Integrated Development Guidelines**: Built-in Odoo coding standards and best practices enforcement
@@ -180,6 +181,7 @@ Search Odoo documentation for "computed fields"
 ### Documentation & Guidelines
 - `get_odoo_local_context(include_readme_excerpt)` - Show configured `ODOO_SOURCE`, `ODOO_BASE_COMMAND`, `ODOO_TOOL_README`, source hints, and command templates
 - `inspect_odoo_source(path, query, scope, max_files)` - Use AST to compactly inspect Odoo core/addon manifests, models, controllers, routes, imports, and version signals without executing source
+- `read_odoo_addon_context(addon, addons_path, path, include, shrink_mode, expand_models, expand_methods, context_budget_tokens)` - Build a local addon dependency map, schema map, and shrunk `# FILEPATH` source dump without running Odoo
 - `get_documentation_url(path, version)` - Get an official Odoo documentation URL
 - `search_documentation(query, version)` - Search the built-in official reference catalog and return Odoo documentation links
 - `get_development_guidelines(context)` - Get context-specific coding guidelines
