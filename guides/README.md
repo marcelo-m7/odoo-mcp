@@ -62,7 +62,7 @@
 ## About the Server
 
 The Odoo Development MCP Server provides:
-- ✅ Version-aware Odoo documentation search (17.0, 18.0, 19.0)
+- ✅ Version-aware Odoo documentation search (17.0, 18.0, 19.0, 20.0)
 - ✅ AI-powered code generation for modules, models, views, and security
 - ✅ Development guidelines and naming convention enforcement
 - ✅ Multi-prompt workflows for common Odoo tasks

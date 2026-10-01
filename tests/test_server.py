@@ -88,6 +88,7 @@ def test_tools():
         print(f"✓ Tool registered: {tool}")
     
     print("\nTesting tool execution...")
+    assert "20.0" in ODOO_VERSIONS
     
     from odoo_mcp.server import set_odoo_version, get_current_version
     
@@ -118,6 +119,11 @@ def test_tools():
     result = get_documentation_url("reference/backend/orm#fields", "19.0")
     assert "#fields" in result
     print(f"✓ get_documentation_url: {result}")
+
+    result = get_documentation_url("howtos/translations", "20.0")
+    assert result.endswith("/developer/howtos/translations.html")
+    assert "/developer/reference/howtos/" not in result
+    print(f"✓ get_documentation_url howto: {result}")
 
     previous_env = {
         name: os.environ.get(name)
@@ -167,7 +173,7 @@ class DemoModel(models.Model):
 
 
 class DemoController(http.Controller):
-    @http.route("/demo", auth="user", type="json", methods=["POST"])
+    @http.route("/demo", auth="user", type="jsonrpc", methods=["POST"])
     def demo(self):
         pass
 """,
@@ -305,6 +311,7 @@ class AccountMove(models.Model):
     assert "pre-migration.py" in result
     assert "post-migration.py" in result
     assert "end-migration.py" in result
+    assert "migrations/19.0.1.0.0" in result
     assert "util.rename_field" in result
     assert "util.rename_xmlid" in result
     assert "util.recompute_fields" in result
@@ -458,6 +465,17 @@ class AccountMove(models.Model):
     print(f"✓ create_odoo_model escaping: Generated {len(result)} chars")
     
     from odoo_mcp.server import create_odoo_view
+    set_odoo_version("17.0")
+    result = create_odoo_view(
+        model_name="test.model",
+        view_type="list",
+        fields_to_display=["name", "test_field"]
+    )
+    assert "<tree>" in result
+    assert "tree,form" in result
+    print(f"✓ create_odoo_view Odoo 17 tree alias: Generated {len(result)} chars")
+
+    set_odoo_version("18.0")
     result = create_odoo_view(
         model_name="test.model",
         view_type="tree",
@@ -484,6 +502,68 @@ class AccountMove(models.Model):
         module_name="test_module"
     )
     print(f"✓ create_security_rules: Generated {len(result)} chars")
+
+    set_odoo_version("20.0")
+    result = create_odoo_module(
+        module_name="test_module",
+        display_name="Test Module",
+        description="A test module"
+    )
+    assert "security/ir.access.csv" in result
+    assert "id,name,model_id,group_id/id,operation,domain" in result
+    print(f"✓ create_odoo_module Odoo 20 security: Generated {len(result)} chars")
+
+    result = create_odoo_view(
+        model_name="test.model",
+        view_type="tree",
+        fields_to_display=["name", "test_field"]
+    )
+    assert "<list>" in result
+    assert "Requested `tree`; generated `list`" in result
+    print(f"✓ create_odoo_view Odoo 20 list alias: Generated {len(result)} chars")
+
+    result = create_security_rules(
+        model_name="test.model",
+        module_name="test_module"
+    )
+    assert "security/ir.access.csv" in result
+    assert "operation,domain" in result
+    assert "base.group_system,crud" in result
+    assert "<record" not in result
+    print(f"✓ create_security_rules Odoo 20 ir.access: Generated {len(result)} chars")
+
+    result = create_owl_component(
+        component_name="Rental Dashboard",
+        module_name="equipment_rental",
+        props=["title"],
+        version="20.0",
+    )
+    assert "useProps" in result
+    assert "props = useProps" in result
+    assert "static props =" not in result
+    assert "t-out" in result
+    assert "t-esc" not in result
+    print(f"✓ create_owl_component Odoo 20 props: Generated {len(result)} chars")
+
+    result = create_owl_client_action(
+        action_name="Rental Dashboard",
+        module_name="equipment_rental",
+        version="20.0",
+    )
+    assert "props = useProps" in result
+    assert 'static props = ["*"]' not in result
+    print(f"✓ create_owl_client_action Odoo 20 props: Generated {len(result)} chars")
+
+    result = create_owl_field_widget(
+        widget_name="Rental Badge",
+        module_name="equipment_rental",
+        version="20.0",
+    )
+    assert "props = useProps({ ...standardFieldProps });" in result
+    assert "static props =" not in result
+    assert "t-out" in result
+    assert "t-esc" not in result
+    print(f"✓ create_owl_field_widget Odoo 20 props: Generated {len(result)} chars")
 
     result = create_security_rules(
         model_name="test.model",

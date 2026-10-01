@@ -13,6 +13,12 @@ def migration_versions_between(from_version: str, to_version: str) -> list[str]:
     return [f"{version}.0" for version in range(start, end + 1)]
 
 
+def default_migration_version(version: str) -> str:
+    if version in ODOO_VERSIONS:
+        return f"{version}.1.0.0"
+    return version
+
+
 def migration_operation_list(title: str, items: list[dict[str, str]], formatter) -> str:
     if not items:
         return f"# {title}: none declared\n"
@@ -37,7 +43,7 @@ def create_upgrade_script(
     rename_fields = rename_fields or []
     rename_xmlids = rename_xmlids or []
     data_migrations = normalized_string_list(data_migrations)
-    target_version = migration_version or to_version or current_version["value"]
+    target_version = migration_version or default_migration_version(to_version or current_version["value"])
     migration_dir = f"migrations/{target_version}"
     intermediate_versions = migration_versions_between(from_version, to_version)
     oca_note = "OCA-style migration layout" if oca_style else "Generic Odoo migration layout"
@@ -208,11 +214,19 @@ util.force_install_module(cr, "new_dependency", if_installed=["{module_name}"])
 """
 
     intermediate_output = ", ".join(intermediate_versions) if intermediate_versions else "No intermediate versions detected."
-    oca_checks = """
+    version_dir_note = "" if migration_version else f"- This helper derived `{target_version}` from target Odoo version `{to_version or current_version['value']}`. Pass `migration_version` when the target manifest version differs."
+    oca_20_note = """
+- OCA 20.0 migration protocol says to bump the module to `20.0.1.0.0` and remove previous `migrations/` folders unless the migration issue explicitly justifies new scripts.
+- Treat generated 20.0 scripts as a deliberate deviation from the short OCA 20.0 checklist; raise that on the migration issue before shipping them.
+""" if oca_style and to_version == "20.0" else ""
+    oca_checks = f"""
 - Keep migration-only compatibility changes separate from behavior changes.
 - Do not change original authors or copyright years while migrating.
 - Apply every intermediate version checklist when jumping multiple major versions.
 - Prefer the migration conventions already used by the repository.
+- Use full module-version directories such as `migrations/{target_version}/`; some projects use `upgrades/` instead, so follow the target repository convention.
+{version_dir_note}
+{oca_20_note}
 - Do not run module update/test commands against a database until the local command is confirmed.
 """ if oca_style else "- Follow the migration conventions used by this project."
 

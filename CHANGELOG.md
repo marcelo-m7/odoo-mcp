@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `detect_odoo_version` tool to report likely local Odoo versions from environment variables, `release.py`, addon manifests, and branch names without changing the active MCP version.
 - `inspect_odoo_source` tool to read Odoo core and addon source with AST and return compact summaries of manifests, models, controllers, routes, imports, parse issues, and suggested next reads.
 
+### Changed
+
+- Odoo 20.0 is now a first-class supported/default version, not just a documented version string.
+- Odoo 20.0 scaffolds now use `list` views, `security/ir.access.csv` with `operation` and `domain`, and OWL 3 `useProps(...)` guidance instead of older `tree`, `ir.model.access`, `perm_*`, `ir.rule`, or static OWL props patterns.
+
 ## [1.2.0] - 2026-05-08
 
 ### Added
@@ -63,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_development_guidelines`: Access coding standards and best practices
 - `create_odoo_module`: Generate complete Odoo module scaffolding
 - `create_odoo_model`: Create Odoo models with fields and validation
-- `create_odoo_view`: Generate Odoo views (form, tree, search, kanban)
+- `create_odoo_view`: Generate Odoo views (form, collection, search, kanban)
 - `create_security_rules`: Create security rules (ir.model.access.csv, record rules)
 
 #### Resources (3 total)

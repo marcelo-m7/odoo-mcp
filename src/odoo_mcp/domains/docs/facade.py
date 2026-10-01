@@ -7,6 +7,8 @@ from ...runtime.paths import DOCS_BASE_PATH, ODOO_DOCS_BASE_URL
 from ...runtime.state import ODOO_VERSIONS, current_version
 from .catalog import REFERENCE_TOPICS, TOPIC_SHORTCUTS
 
+DEVELOPER_DOC_PREFIXES = ("reference/", "howtos/", "tutorials/")
+
 def get_all_rst_files(version: str) -> list[tuple[Path, str]]:
     """Return local RST files if present. Kept for backward-compatible tests/imports."""
     version_path = DOCS_BASE_PATH / version
@@ -27,11 +29,13 @@ def normalize_reference_path(path: str = "") -> str:
     clean_path = clean_path.split("#", 1)[0].split("?", 1)[0]
     clean_path = clean_path.removesuffix(".html").removesuffix(".rst")
 
-    if clean_path in {"", "reference", "developer/reference"}:
+    if clean_path in {"", "reference", "developer", "developer/reference"}:
         return ""
-    if clean_path.startswith("developer/reference/"):
+    if clean_path.startswith("developer/"):
         clean_path = clean_path.removeprefix("developer/")
-    elif not clean_path.startswith("reference/"):
+    if clean_path == "reference":
+        return ""
+    if not clean_path.startswith(DEVELOPER_DOC_PREFIXES):
         clean_path = f"reference/{clean_path}"
 
     return clean_path

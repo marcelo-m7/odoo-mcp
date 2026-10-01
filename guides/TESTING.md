@@ -74,7 +74,7 @@ See [OPENCODE_SETUP.md](OPENCODE_SETUP.md) for configuration instructions.
 Before deploying or using the server, verify:
 
 - [ ] `python -m tests.test_server` passes all tests
-- [ ] Documentation files exist in `docs/17.0/`, `docs/18.0/`, `docs/19.0/`
+- [ ] Official documentation URL tools work for supported versions (`17.0`, `18.0`, `19.0`, `20.0`); local `docs/<version>/` fallback directories are optional
 - [ ] Rule files exist in `rules/`
 - [ ] MCP client configuration is correct
 - [ ] Server appears in MCP client after restart

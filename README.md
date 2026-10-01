@@ -1,6 +1,6 @@
 # Odoo Development MCP Server
 
-A Model Context Protocol (MCP) server for Odoo module development with AI assistance. Provides version-aware official documentation links (17.0, 18.0, 19.0), intelligent code generation, and development workflow automation.
+A Model Context Protocol (MCP) server for Odoo module development with AI assistance. Provides version-aware official documentation links (17.0, 18.0, 19.0, 20.0), intelligent code generation, and development workflow automation.
 
 **🚀 [Quick Start](guides/QUICK_START.md)** | **📖 [OpenCode Setup](guides/OPENCODE_SETUP.md)** | **🧪 [Testing Guide](guides/TESTING.md)** | **🔧 [Troubleshooting](.github/TROUBLESHOOTING.md)** | **📋 [Guides Index](guides/README.md)** | **📝 [Changelog](CHANGELOG.md)**
 
@@ -118,7 +118,7 @@ Note: Requires `pip install mcp` first.
 Then use in OpenCode:
 ```
 Search Odoo documentation for "fields.Command"
-Set Odoo version to 19.0
+Set Odoo version to 20.0
 Get Odoo local context
 Get documentation URL for reference/backend/orm
 Create model library.book with fields: name, author
@@ -153,7 +153,7 @@ You should see all tests pass with ✓ marks.
 
 ```
 # Set your Odoo version
-Set Odoo version to 19.0
+Set Odoo version to 20.0
 
 # Create a module
 Create an Odoo module called "library_management" with display name "Library Management"
@@ -174,7 +174,7 @@ Search Odoo documentation for "computed fields"
 ## Available Tools
 
 ### Version Management
-- `set_odoo_version(version)` - Switch between 17.0, 18.0, 19.0
+- `set_odoo_version(version)` - Switch between 17.0, 18.0, 19.0, 20.0
 - `get_current_version()` - Check current version
 - `detect_odoo_version(path, ...)` - Detect a likely local Odoo version from env vars, `release.py`, addon manifests, and branch names without changing the active version
 
@@ -215,9 +215,9 @@ Search Odoo documentation for "computed fields"
 Access Odoo documentation and development rules:
 
 **Documentation:**
-- `odoo://docs/19.0/index` - Official developer reference index
-- `odoo://docs/19.0/reference/backend/orm` - ORM reference URL and metadata
-- `get_documentation_url("reference/backend/security", "19.0")` - Official Odoo security documentation URL
+- `odoo://docs/20.0/index` - Official developer reference index
+- `odoo://docs/20.0/reference/backend/orm` - ORM reference URL and metadata
+- `get_documentation_url("reference/backend/security", "20.0")` - Official Odoo security documentation URL
 
 **Local Odoo Context:**
 - `odoo://local/context` - Configured local Odoo source path, base command, and tooling README excerpt
@@ -234,7 +234,7 @@ Access Odoo documentation and development rules:
 ```python
 # In Claude/OpenCode:
 
-1. Set Odoo version to 19.0
+1. Set Odoo version to 20.0
 2. Plan the feature: task management with priorities and deadlines
 3. Layout dependencies for task management with chatter and automations
 4. Create module "task_manager" with display name "Task Manager"
@@ -277,7 +277,7 @@ The OWL helpers generate Odoo asset bundle entries, `@odoo/owl` imports, registr
 ### Migration And Error Examples
 
 ```text
-Create upgrade scripts for equipment_rental from 17.0 to 19.0, renaming old_stage_id to stage_id and old XML IDs.
+Create upgrade scripts for equipment_rental from 17.0 to 20.0, renaming old_stage_id to stage_id and old XML IDs.
 ```
 
 The migration scaffold includes phase-specific `odoo.upgrade.util` examples for model, field, XML ID, module, SQL, and ORM data-migration helpers.
@@ -380,9 +380,9 @@ https://www.odoo.com/documentation/<version>/developer/reference.html
 Common topic links follow the same structure:
 
 ```text
-https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html
-https://www.odoo.com/documentation/19.0/developer/reference/backend/security.html
-https://www.odoo.com/documentation/19.0/developer/reference/frontend/owl_components.html
+https://www.odoo.com/documentation/20.0/developer/reference/backend/orm.html
+https://www.odoo.com/documentation/20.0/developer/reference/backend/security.html
+https://www.odoo.com/documentation/20.0/developer/reference/frontend/owl_components.html
 ```
 
 The repository still contains `docs/` as a legacy local fallback, but MCP tools prefer official documentation URLs.
@@ -391,7 +391,8 @@ The repository still contains `docs/` as a legacy local fallback, but MCP tools 
 docs/
 ├── 17.0/ (legacy fallback)
 ├── 18.0/ (legacy fallback)
-└── 19.0/ (legacy fallback)
+├── 19.0/ (legacy fallback)
+└── 20.0/ (legacy fallback, if available)
 
 rules/
 ├── clean-code.mdc

@@ -25,7 +25,8 @@ module_name/
 ├── views/                   # XML views
 │   └── model_views.xml
 ├── security/                # Access rights and rules
-│   ├── ir.model.access.csv
+│   ├── ir.model.access.csv  # Odoo 17-19
+│   ├── ir.access.csv        # Odoo 20
 │   └── module_security.xml
 ├── data/                    # Data files
 ├── wizard/                  # Transient models
@@ -89,19 +90,11 @@ total_amount = fields.Float(
 - **Constraint methods**: Start with `_check_` (e.g., `_check_dates`)
 - **CRUD override**: `create`, `write`, `unlink` (not `delete`)
 
-### Decorators Order
-Always use decorators in this order:
-```python
-@api.model
-@api.depends('field1', 'field2')
-@api.constrains('field1')
-@api.onchange('field1')
-def method_name(self):
-    pass
-```
-
 ### API Decorators
+Use the decorator that matches the method semantics. Do not stack unrelated decorators on the same method.
+
 - `@api.model`: Class-level method (no recordset)
+- `@api.model_create_multi`: Batch-safe `create` overrides; use `vals_list`
 - `@api.depends('field')`: For computed fields
 - `@api.constrains('field')`: For validation
 - `@api.onchange('field')`: For UI reactivity
@@ -118,10 +111,13 @@ class MyModel(models.Model):
     # Fields declaration
     name = fields.Char(required=True)
     
-    # SQL Constraints
-    _sql_constraints = [
-        ('name_unique', 'unique(name)', 'Name must be unique!'),
-    ]
+    # SQL constraints and indexes
+    # Odoo 20: prefer models.Constraint / models.Index for new code.
+    # Odoo 17-19: _sql_constraints is still common in existing modules.
+    _name_unique = models.Constraint(
+        'UNIQUE(name)',
+        'Name must be unique!',
+    )
     
     # Python Constraints
     @api.constrains('field_name')
@@ -143,12 +139,11 @@ class MyModel(models.Model):
             self.email = self.partner_id.email
     
     # CRUD methods
-    @api.model
-    def create(self, vals):
-        # Pre-processing
-        result = super(MyModel, self).create(vals)
-        # Post-processing
-        return result
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            vals.setdefault('state', 'draft')
+        return super().create(vals_list)
     
     # Action methods
     def action_confirm(self):
@@ -171,7 +166,8 @@ class MyModel(models.Model):
 - **ID format**: `view_{model}_{type}[_suffix]`
 - Examples:
   - `view_sale_order_form`
-  - `view_sale_order_tree`
+  - `view_sale_order_tree` (Odoo 17)
+  - `view_sale_order_list` (Odoo 18+)
   - `view_sale_order_search`
   - `view_sale_order_kanban`
 
@@ -225,9 +221,30 @@ class MyModel(models.Model):
 - **ID format**: `menu_{model}` or `menu_{module}_{purpose}`
 - Use meaningful hierarchy
 
+### QWeb Output
+- Odoo 20: use `t-out` for escaped output; older `t-esc` snippets should be migrated when touching templates.
+- Treat raw or trusted HTML as a security boundary. Only output safe markup after explicit sanitization or framework-provided safe markup handling.
+- Prefer `t-field` for formatted record fields in reports and website templates.
+
 ## Security Standards
 
-### Access Rights (ir.model.access.csv)
+### Access Rights (Odoo 20 ir.access.csv)
+
+Odoo 20 consolidates model access and row-level restrictions into `ir.access` rows. Use `security/ir.access.csv`, `operation` letters, and optional access domains.
+
+```csv
+id,name,model_id,group_id/id,operation,domain
+access_model_user,model user,model.name,base.group_user,ru,"[('create_uid', '=', user.id)]"
+access_model_manager,model manager,model.name,base.group_system,crud,
+```
+
+**Rules:**
+- Use `operation` letters: `c` create, `r` read, `u` update/write, `d` delete/unlink
+- Put row-level restrictions in the `domain` column on the relevant access row
+- Use `base.group_everyone` for all-user grants; leave `group_id/id` empty only for intentional global restrictions
+- Do not copy older `perm_*` or separate `ir.rule` snippets into new Odoo 20 examples
+
+### Access Rights (Odoo 17-19 ir.model.access.csv)
 ```csv
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_model_user,model.user,model_model_name,base.group_user,1,0,0,0
@@ -240,7 +257,7 @@ access_model_manager,model.manager,model_model_name,base.group_system,1,1,1,1
 - User group: Usually read-only (1,0,0,0)
 - Manager group: Full access (1,1,1,1)
 
-### Record Rules
+### Record Rules (Odoo 17-19)
 ```xml
 <record id="rule_model_own" model="ir.rule">
     <field name="name">Own Records Only</field>
@@ -256,6 +273,15 @@ access_model_manager,model.manager,model_model_name,base.group_system,1,1,1,1
 - Test thoroughly
 - Document complex domains
 
+## Controller Standards
+
+- Keep controller code on public APIs: `http.Controller`, `http.route`, `request`, and `Response`.
+- Odoo 20: use route `type='jsonrpc'` for JSON-RPC routes; older `type='json'` snippets should be verified against target source before copying.
+- Odoo 20: `auth='bearer'` routes need explicit `bearer_scope` and token/record ownership review.
+- Public and portal routes must enforce ownership/publication checks server-side. Keep `sudo()` narrow and never use it to bypass missing access design.
+- Preserve CSRF for unsafe HTTP routes unless there is a documented external-callback reason and replacement validation.
+- Test controllers with `HttpCase`; include anonymous, portal owner, other portal user, internal user, and cross-company cases when access differs.
+
 ## Data Files
 
 ### Sequencing
@@ -263,7 +289,9 @@ Order in `__manifest__.py` matters:
 ```python
 'data': [
     'security/module_security.xml',      # Groups first
-    'security/ir.model.access.csv',      # Access rights
+    'security/ir.access.csv',            # Odoo 20 access rights and domains
+    # 'security/ir.model.access.csv',    # Odoo 17-19 access rights
+    # 'security/record_rules.xml',       # Odoo 17-19 row-level rules
     'data/module_data.xml',              # Master data
     'views/model_views.xml',             # Views
     'views/menu_views.xml',              # Menus last
@@ -275,6 +303,9 @@ Order in `__manifest__.py` matters:
 - Use `<odoo>` for updateable definitions (views, menus)
 - Keep data records organized by type
 - Use external IDs consistently
+- Odoo 20: use `type="bytes" file="..."` for binary XML file data; avoid older `type="base64" file="..."` in new snippets
+- Odoo 20: XML `<function>` calls block unsafe names like `__*`; avoid using data XML as an arbitrary method execution mechanism
+- Manifest legacy keys `init_xml`, `update_xml`, and `demo_xml` are obsolete; move entries to `data` or `demo`
 
 ## Performance Best Practices
 
@@ -302,10 +333,13 @@ for record in records:
     val2 = record.field2
 ```
 
-### SQL Constraints vs Python
-- Prefer SQL constraints for simple validations
+### Constraints, Domains, and Aggregates
+- Prefer SQL constraints for simple validations. In Odoo 20 new code, prefer `models.Constraint`, `models.Index`, and `models.UniqueIndex`; keep existing `_sql_constraints` unless a migration requires changing persisted constraints.
 - Use Python constraints for complex business logic
 - Always provide clear error messages
+- Odoo 20: use `odoo.fields.Domain` or target-source `odoo.orm.domains.Domain` helpers instead of old `odoo.osv.expression` imports.
+- Odoo 20: replace old `read_group(domain, fields, groupby, lazy=True)` assumptions with aggregate/groupby signatures, or use `formatted_read_group` when web-style dictionaries are required.
+- Odoo 20: field aggregation uses `aggregator=`, not old `group_operator=`.
 
 ### Search Optimization
 ```python
@@ -317,20 +351,30 @@ count = self.search_count([('state', '=', 'draft')])
 
 # GOOD: Check existence
 exists = self.search([('name', '=', value)], limit=1)
+
+# GOOD: Batch grouped counts instead of per-record search_count loops
+counts = dict(
+    self.env['target.model']._read_group(
+        [('parent_id', 'in', records.ids)],
+        ['parent_id'],
+        ['__count'],
+    )
+)
 ```
+
+Use the Odoo profiler, SQL collector, periodic collector, and `assertQueryCount` when optimizing. Do not add indexes or rewrites without measuring realistic data.
 
 ## Translation and i18n
 
 ### Translatable Strings
 ```python
-from odoo import _, _lt
+from odoo import _
 
 # Use _ for translatable strings
 raise ValidationError(_("This field is required"))
 
-# Use _lt for lazy translation (class-level)
-_name = 'sale.order'
-_description = _lt('Sales Order')
+# Odoo 20: prefer env-bound translations when the language comes from env/context
+message = self.env._("This field is required")
 ```
 
 ### XML Translation
@@ -338,6 +382,7 @@ _description = _lt('Sales Order')
 <field name="name">String to translate</field>
 ```
 All user-facing strings in XML are automatically translatable.
+Keep translatable strings literal where possible so extraction can find them. Export/import PO files under `i18n/` and test translated `Char`, `Text`, and `Html` fields in the target language.
 
 ## Testing Standards
 
@@ -357,6 +402,12 @@ class TestMyModel(TransactionCase):
         self.assertTrue(record)
         self.assertEqual(record.name, 'Test')
 ```
+
+### Test Guardrails
+- Odoo 20: `SingleTransactionCase` is removed; use `TransactionCase` or `HttpCase` and avoid shared mutable test state across methods.
+- Odoo 20: untagged tests default to `standard` and `post_install`; install-time tests need `@tagged('at_install', '-post_install')`.
+- Use `Form` helper tests for defaults/onchanges, access tests for intended and forbidden operations, and `HttpCase` for controllers, portal, reports, website, or browser flows.
+- Add performance regression tests with `assertQueryCount` only around measured critical paths.
 
 ## Common Pitfalls to Avoid
 
@@ -428,8 +479,9 @@ def cached_method(self, arg1, arg2):
 
 ### Version-Specific Notes
 - **17.0**: Stable, widely deployed
-- **18.0**: Incremental improvements
-- **19.0**: Latest features, may have breaking changes
+- **18.0**: Uses `list` collection views instead of older `tree` snippets
+- **19.0**: Newer server/frontend APIs; verify generated snippets against local source
+- **20.0**: Uses `ir.access` with `operation`/`domain`, OWL 3 `useProps(...)`, and `list` views
 
 ## Summary Checklist
 

@@ -6,6 +6,19 @@ from ...runtime.state import current_version
 from ...utils.formatting import normalized_string_list, python_string, xml_attr, xml_text
 from ..docs.facade import get_official_documentation_url
 
+
+def collection_view_type(version: str) -> str:
+    return "tree" if version == "17.0" else "list"
+
+
+def access_file(version: str) -> str:
+    return "security/ir.access.csv" if version == "20.0" else "security/ir.model.access.csv"
+
+
+def access_file_name(version: str) -> str:
+    return access_file(version).split("/", 1)[1]
+
+
 def create_odoo_module(
     module_name: str,
     display_name: str,
@@ -15,6 +28,16 @@ def create_odoo_module(
     depends: list[str] | None = None,
 ) -> str:
     version = current_version["value"]
+    security_file = access_file(version)
+    security_file_name = access_file_name(version)
+    if version == "20.0":
+        access_header = "id,name,model_id,group_id/id,operation,domain"
+        access_example = f"access_{module_name}_user,{module_name} user,your.model,base.group_user,crud,"
+        access_note = "\nOdoo 20 access rows use `ir.access` operations (`c`, `r`, `u`, `d`) and optional access domains. Replace `your.model` with the model technical name.\n"
+    else:
+        access_header = "id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink"
+        access_example = f"access_{module_name}_user,{module_name}.user,model_{module_name}_model,base.group_user,1,1,1,1"
+        access_note = ""
     depends = normalized_string_list(depends, ["base"])
     if not depends:
         depends = ["base"]
@@ -30,7 +53,7 @@ def create_odoo_module(
     'license': 'LGPL-3',
     'depends': {depends!r},
     'data': [
-        'security/ir.model.access.csv',
+        {python_string(security_file)},
     ],
     'demo': [],
     'installable': True,
@@ -62,7 +85,7 @@ from . import wizards
 │   └── __init__.py
 ├── views/
 ├── security/
-│   └── ir.model.access.csv
+│   └── {security_file_name}
 ├── data/
 └── static/
     └── description/
@@ -95,12 +118,12 @@ from . import wizards
 # Import your CLI helpers here, if this module exposes any
 ```
 
-### security/ir.model.access.csv
+### {security_file}
 ```csv
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_{module_name}_user,{module_name}.user,model_{module_name}_model,base.group_user,1,1,1,1
+{access_header}
+{access_example}
 ```
-
+{access_note}
 ## Naming Convention Rules ⚠️
 - **Module name**: Use lowercase_with_underscores (e.g., `sale_extended`)
 - **Technical name**: Same as directory name
@@ -222,8 +245,8 @@ def create_odoo_view(
 ) -> str:
     version = current_version["value"]
     requested_view_type = view_type.lower().strip()
-    collection_view_type = "list" if version in {"18.0", "19.0"} else "tree"
-    normalized_view_type = collection_view_type if requested_view_type in {"tree", "list"} else requested_view_type
+    collection_type = collection_view_type(version)
+    normalized_view_type = collection_type if requested_view_type in {"tree", "list"} else requested_view_type
 
     if normalized_view_type not in {"list", "tree", "form", "search", "kanban"}:
         return f"Unsupported view type: {view_type}. Supported types: list/tree, form, search, kanban"
@@ -330,7 +353,7 @@ def create_odoo_view(
     action_xml = f'''    <record id="action_{model_underscore_attr}" model="ir.actions.act_window">
         <field name="name">{display_name_xml}</field>
         <field name="res_model">{model_name_xml}</field>
-        <field name="view_mode">{collection_view_type},form</field>
+        <field name="view_mode">{collection_type},form</field>
     </record>
 
 {menu_xml}'''
@@ -339,6 +362,7 @@ def create_odoo_view(
     action_reference = get_official_documentation_url(version, "reference/backend/actions#window-actions-ir-actions-act-window")
     test_reference = get_official_documentation_url(version, "reference/backend/testing")
     rules_reference = "odoo://rules/odoo-development"
+    security_guardrail = "Add `ir.access` rows and access domains separately." if version == "20.0" else "Add ACLs and record rules separately."
     alias_note = ""
     if requested_view_type in {"tree", "list"} and requested_view_type != normalized_view_type:
         alias_note = f"\nRequested `{requested_view_type}`; generated `{normalized_view_type}` because Odoo {version} uses `{normalized_view_type}` for collection views.\n"
@@ -353,7 +377,7 @@ def create_odoo_view(
 
 ## Action and Menu
 
-The action uses `{collection_view_type},form` for Odoo {version}. A menu item is only generated when `parent_menu` is provided; otherwise choose a real parent menu from your module or dependency.
+The action uses `{collection_type},form` for Odoo {version}. A menu item is only generated when `parent_menu` is provided; otherwise choose a real parent menu from your module or dependency.
 
 ```xml
 <odoo>
@@ -366,16 +390,16 @@ The action uses `{collection_view_type},form` for Odoo {version}. A menu item is
 Add to __manifest__.py 'data' section after security files:
 ```python
 'data': [
-    'security/ir.model.access.csv',
+    {python_string(access_file(version))},
     'views/{model_underscore}_views.xml',
 ],
 ```
 
 ## Odoo View Guardrails
-- **Collection views**: Odoo 17 uses `tree`; Odoo 18/19 use `list`.
+- **Collection views**: Odoo 17 uses `tree`; Odoo 18+ uses `list`.
 - **Action view_mode**: Keep it aligned with the generated collection view type.
 - **Menu parent**: Do not use placeholder parents like `base.menu_custom`; pass a real `parent_menu` XML ID or add the menu later.
-- **Security**: Views do not grant access. Add ACLs and record rules separately.
+- **Security**: Views do not grant access. {security_guardrail}
 - **Tests**: For important workflows, add a Form helper test or access test covering the generated view's model.
 
 ## Next Steps
@@ -405,24 +429,72 @@ def create_security_rules(
             return f"Error: {csv_label} must not contain commas or newlines"
 
     model_underscore = model_name.replace(".", "_")
+    version = current_version["value"]
 
-    csv_lines = ["id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink"]
+    if version == "20.0":
+        csv_lines = ["id,name,model_id,group_id/id,operation,domain"]
+    else:
+        csv_lines = ["id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink"]
 
     for group in groups:
-        if group == "user":
-            perms = "1,0,0,0"
-        elif group == "manager":
-            perms = "1,1,1,1"
+        if version == "20.0":
+            operation = "r" if group == "user" else "crud"
+            group_ref = "base.group_system" if group == "manager" else f"base.group_{group}"
+            line = f"access_{model_underscore}_{group},{model_name} {group},{model_name},{group_ref},{operation},"
         else:
-            perms = "1,1,1,1"
-
-        line = f"access_{model_underscore}_{group},{module_name}.{group},model_{model_underscore},base.group_{group},{perms}"
+            if group == "user":
+                perms = "1,0,0,0"
+            elif group == "manager":
+                perms = "1,1,1,1"
+            else:
+                perms = "1,1,1,1"
+            line = f"access_{model_underscore}_{group},{module_name}.{group},model_{model_underscore},base.group_{group},{perms}"
         csv_lines.append(line)
 
     csv_content = "\n".join(csv_lines)
-    version = current_version["value"]
     doc_reference = get_official_documentation_url(version, "reference/backend/security")
     rules_reference = "odoo://rules/odoo-development"
+    security_file = access_file(version)
+
+    if version == "20.0":
+        return f"""# Security Rules for {model_name} (Odoo {version})
+
+## Access Rights And Domains (CSV)
+
+**File**: {security_file}
+
+```csv
+{csv_content}
+```
+
+## Odoo 20 Security Guidelines ⚠️
+- **Access model**: Use `ir.access` rows with `operation` letters (`c`, `r`, `u`, `d`).
+- **Record filtering**: Put row-level restrictions in the `domain` column of the relevant access row.
+- **All users**: Use `base.group_everyone` for all users; avoid blank `group_id` unless you need a global restriction.
+- **Migration note**: Do not copy older `ir.model.access`/`perm_*` or separate `ir.rule` examples into new Odoo 20 scaffolds.
+- **Testing**: Test realistic users, groups, companies, and negative access cases.
+
+## Manifest Configuration
+
+Add to __manifest__.py 'data' section (order matters):
+```python
+'data': [
+    {python_string(security_file)},
+    'views/{model_underscore}_views.xml',
+],
+```
+
+## Next Steps
+1. Add security files to manifest in correct order
+2. Add `domain` values where users should only access own, company, portal, or team records
+3. Test with different user roles and companies
+4. Review guidelines: `get_development_guidelines("security")`
+
+## References
+- Security Documentation: {doc_reference}
+- Development Rules: {rules_reference}
+- See Odoo 20 access/domain guidance before migrating older security snippets
+"""
 
     return f"""# Security Rules for {model_name} (Odoo {version})
 

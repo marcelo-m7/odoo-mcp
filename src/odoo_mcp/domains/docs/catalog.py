@@ -370,7 +370,7 @@ TOPIC_SHORTCUTS: list[dict[str, Any]] = [
         "section": "Security shortcuts",
         "title": "Access rights",
         "path": "reference/backend/security#access-rights",
-        "keywords": ["access rights", "acl", "ir.model.access.csv", "perm_read", "perm_write", "perm_create", "perm_unlink"],
+        "keywords": ["access rights", "access domains", "acl", "ir.access", "ir.access.csv", "operation", "ir.model.access.csv", "perm_read", "perm_write", "perm_create", "perm_unlink"],
     },
     {
         "section": "Security shortcuts",

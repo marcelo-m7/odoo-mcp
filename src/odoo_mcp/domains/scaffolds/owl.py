@@ -37,6 +37,10 @@ def js_string_array(values: list[str]) -> str:
     return "[" + ", ".join(js_string(value) for value in values) + "]"
 
 
+def cleaned_owl_props(props: list[str]) -> list[str]:
+    return [snake_identifier(prop, "prop") for prop in normalized_string_list(props)]
+
+
 def owl_asset_paths(module_name: str, component_slug: str, category: str, include_scss: bool = True) -> list[str]:
     base_path = f"{module_name}/static/src/{category}/{component_slug}/{component_slug}"
     paths = [f"{base_path}.js", f"{base_path}.xml"]
@@ -53,11 +57,21 @@ def owl_manifest_asset_snippet(bundle: str, paths: list[str]) -> str:
 
 
 def owl_props_object(props: list[str]) -> str:
-    cleaned_props = [snake_identifier(prop, "prop") for prop in normalized_string_list(props)]
+    cleaned_props = cleaned_owl_props(props)
     if not cleaned_props:
         return "{}"
     body = ",\n        ".join(
         f"{prop}: {{ type: String, optional: true }}" for prop in cleaned_props
+    )
+    return "{\n        " + body + ",\n    }"
+
+
+def owl3_props_object(props: list[str]) -> str:
+    cleaned_props = cleaned_owl_props(props)
+    if not cleaned_props:
+        return "{}"
+    body = ",\n        ".join(
+        f"{prop}: t.string().optional()" for prop in cleaned_props
     )
     return "{\n        " + body + ",\n    }"
 
@@ -74,6 +88,10 @@ def owl_service_setup_lines(services: list[str]) -> str:
 
 def owl_state_line(use_state: bool) -> str:
     return '        this.state = useState({ value: "" });' if use_state else ""
+
+
+def qweb_output_directive(version: str) -> str:
+    return "t-out" if version == "20.0" else "t-esc"
 
 
 def owl_docs(version: str) -> dict[str, str]:
@@ -106,6 +124,9 @@ def plan_owl_feature(
         "field_widget": 'Use `registry.category("fields").add(widgetName, fieldDefinition)` and `standardFieldProps`.',
         "service": 'Use `registry.category("services").add(serviceName, serviceDefinition)` and declare dependencies explicitly.',
     }.get(integration, "Choose the narrowest registry category for the Odoo extension point you are targeting.")
+    props_guidance = "declare props with `useProps(...)`" if owl_version == "20.0" else "declare explicit static props"
+    viewport_guidance = "use the UI service/plugin APIs for viewport state" if owl_version == "20.0" else "check `env.isSmall` before adding dense layouts"
+    output_guidance = "prefer `t-out`; use explicit safe markup for trusted HTML" if owl_version == "20.0" else "prefer `t-esc`/`t-out`; only use safe HTML with an explicit trust boundary"
 
     return f"""# OWL Feature Plan: {feature_description}
 
@@ -119,7 +140,7 @@ Asset bundle: `{target_bundle}`
 1. Confirm the Odoo version and existing frontend conventions in the target addon.
 2. Put JS/XML/SCSS under `static/src/` using the addon structure already in the repo.
 3. Register files in `__manifest__.py` under `{target_bundle}`.
-4. Keep the component small: explicit props, local `useState` only for UI state, and services through `useService`.
+4. Keep the component small: {props_guidance}, local `useState` only for UI state, and services through `useService`.
 5. Load templates via XML assets; use static `template = "{module_slug}.ComponentName"`.
 6. Add the right registry entry only when integrating with an Odoo extension point.
 7. Add a frontend test or tour around the user-visible behavior, not just component construction.
@@ -131,9 +152,9 @@ Asset bundle: `{target_bundle}`
 ## Guardrails
 
 - Do not mutate `props`; send changes through callbacks, `record.update`, or services.
-- Treat `t-raw`/unsafe HTML as a security boundary; prefer `t-esc`/`t-out`.
+- Treat unsafe HTML as a security boundary; {output_guidance}.
 - Do not call RPC directly from random helpers when `orm`, `action`, `notification`, or `dialog` services fit.
-- Check mobile behavior and `env.isSmall` before adding dense layouts.
+- Check mobile behavior and {viewport_guidance}.
 - Restart/update assets and clear browser cache when testing templates or SCSS.
 
 ## References
@@ -166,16 +187,31 @@ def create_owl_component(
     template_name = f"{module_slug}.{class_name}"
     paths = owl_asset_paths(module_slug, component_slug, "components")
     docs = owl_docs(owl_version)
-    owl_imports = ["Component"] + (["useState"] if use_state else [])
+    is_owl3 = owl_version == "20.0"
+    cleaned_props = cleaned_owl_props(props)
+    owl_imports = ["Component"]
+    if is_owl3 and cleaned_props:
+        owl_imports.append("t")
+    if is_owl3:
+        owl_imports.append("useProps")
+    if use_state:
+        owl_imports.append("useState")
     hook_import = '\nimport { useService } from "@web/core/utils/hooks";' if services else ""
     state_line = owl_state_line(use_state)
     setup_lines = "\n".join(line for line in [owl_service_setup_lines(services), state_line] if line)
+    props_line = f"    props = useProps({owl3_props_object(props)});" if is_owl3 else f"    static props = {owl_props_object(props)};"
+    output_directive = qweb_output_directive(owl_version)
+    if cleaned_props:
+        display_prop = cleaned_props[0]
+        ready_line = f'<p t-if="props.{display_prop}" {output_directive}="props.{display_prop}"/>\n            <p t-else="">Component ready.</p>'
+    else:
+        ready_line = "<p>Component ready.</p>"
 
     js = f'''import {{ {", ".join(owl_imports)} }} from "@odoo/owl";{hook_import}
 
 export class {class_name} extends Component {{
     static template = "{template_name}";
-    static props = {owl_props_object(props)};
+{props_line}
 
     setup() {{
 {setup_lines}
@@ -188,8 +224,7 @@ export class {class_name} extends Component {{
     <t t-name="{template_name}">
         <section class="o_{component_slug}">
             <h3>{class_name}</h3>
-            <p t-if="props.title" t-esc="props.title"/>
-            <p t-else="">Component ready.</p>
+            {ready_line}
         </section>
     </t>
 </templates>'''
@@ -235,6 +270,7 @@ export class {class_name} extends Component {{
 ## Guardrails
 
 - Template names should stay globally unique: `{template_name}`.
+- {"Odoo 20 uses OWL 3 `useProps(...)`; do not add `static props` or `defaultProps`." if is_owl3 else "Declare props explicitly; avoid wildcard props unless an Odoo extension point requires them."}
 - Add services only through `useService` inside `setup()`.
 - Keep data loading out of rendering getters; use lifecycle hooks/services for async work.
 
@@ -264,13 +300,18 @@ def create_owl_client_action(
     paths = owl_asset_paths(module_slug, action_slug, "client_actions")
     docs = owl_docs(owl_version)
     hook_import = '\nimport { useService } from "@web/core/utils/hooks";' if services else ""
+    is_owl3 = owl_version == "20.0"
+    owl_imports = ["Component", "useState"]
+    if is_owl3:
+        owl_imports = ["Component", "t", "useProps", "useState"]
+    props_declaration = "    props = useProps({\n        action: t.object().optional(),\n    });" if is_owl3 else '    static props = ["*"];'
 
-    js = f'''import {{ Component, useState }} from "@odoo/owl";
+    js = f'''import {{ {", ".join(owl_imports)} }} from "@odoo/owl";
 import {{ registry }} from "@web/core/registry";{hook_import}
 
 export class {class_name} extends Component {{
     static template = "{template_name}";
-    static props = ["*"];
+{props_declaration}
 
     setup() {{
         this.state = useState({{ loaded: true }});
@@ -337,7 +378,8 @@ registry.category("actions").add({js_string(tag)}, {class_name});
 ## Guardrails
 
 - The `ir.actions.client` `tag` must match `registry.category("actions").add({js_string(tag)}, {class_name})`.
-- Use `props.action.params` for action parameters instead of hard-coding context.
+- Use `props.action?.params` for action parameters instead of hard-coding context.
+- {"Odoo 20 uses OWL 3 `useProps(...)`; do not add `static props` or `defaultProps`." if is_owl3 else "Avoid wildcard props in normal components; client actions are the exception because Odoo passes action metadata."}
 - Add a menu only under a real parent menu XML ID.
 
 ## References
@@ -364,14 +406,18 @@ def create_owl_field_widget(
     paths = owl_asset_paths(module_slug, widget_slug, "fields")
     docs = owl_docs(owl_version)
     types = normalized_string_list(supported_types, ["char"])
+    is_owl3 = owl_version == "20.0"
+    output_directive = qweb_output_directive(owl_version)
+    owl_imports = "Component, useProps" if is_owl3 else "Component"
+    props_declaration = "    props = useProps({ ...standardFieldProps });" if is_owl3 else "    static props = { ...standardFieldProps };"
 
-    js = f'''import {{ Component }} from "@odoo/owl";
+    js = f'''import {{ {owl_imports} }} from "@odoo/owl";
 import {{ registry }} from "@web/core/registry";
 import {{ standardFieldProps }} from "@web/views/fields/standard_field_props";
 
 export class {class_name} extends Component {{
     static template = "{template_name}";
-    static props = {{ ...standardFieldProps }};
+{props_declaration}
 
     get value() {{
         return this.props.record.data[this.props.name];
@@ -394,7 +440,7 @@ registry.category("fields").add({js_string(widget_slug)}, {camel_identifier(widg
     xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-name="{template_name}">
-        <span t-if="props.readonly" t-esc="value"/>
+        <span t-if="props.readonly" {output_directive}="value"/>
         <input t-else="" class="form-control" t-att-value="value || ''" t-on-change="updateValue"/>
     </t>
 </templates>'''
@@ -437,7 +483,7 @@ registry.category("fields").add({js_string(widget_slug)}, {camel_identifier(widg
 
 ## Guardrails
 
-- Use `standardFieldProps`; do not invent field prop contracts.
+- {"Odoo 20 uses OWL 3 `useProps(...)`; keep `standardFieldProps` inside `useProps`." if is_owl3 else "Use `standardFieldProps`; do not invent field prop contracts."}
 - Read field values from `props.record.data[props.name]`.
 - Update values through `props.record.update(...)` so the form/list model stays consistent.
 - Restrict `supportedTypes` to field types you actually handle.

@@ -140,7 +140,7 @@ The MCP server tools are automatically available to Claude in OpenCode. You can 
 
 #### 1. Set Odoo Version
 ```
-Set Odoo version to 19.0
+Set Odoo version to 20.0
 ```
 
 #### 2. Search Documentation
@@ -250,12 +250,12 @@ If you work with multiple Odoo versions, you can create separate server instance
         "DEFAULT_ODOO_VERSION": "17.0"
       }
     },
-    "odoo-19": {
+    "odoo-20": {
       "type": "local",
       "command": ["python", "/path/to/odoo-dev-mcp/src/odoo_mcp/server.py"],
       "enabled": true,
       "environment": {
-        "DEFAULT_ODOO_VERSION": "19.0"
+        "DEFAULT_ODOO_VERSION": "20.0"
       }
     }
   }
@@ -297,7 +297,7 @@ Create `.opencode.jsonc` in your Odoo project workspace:
       "command": ["python", "${workspaceFolder}/../odoo-dev-mcp/src/odoo_mcp/server.py"],
       "enabled": true,
       "environment": {
-        "ODOO_VERSION": "19.0"
+        "ODOO_VERSION": "20.0"
       }
     }
   }
@@ -311,7 +311,7 @@ Create `.opencode.jsonc` in your Odoo project workspace:
 #### Step 1: Detect and Set Version
 ```
 Detect Odoo version for this workspace
-Set version to 19.0
+Set version to 20.0
 ```
 
 #### Step 2: Get Guidelines
@@ -532,7 +532,7 @@ The server points to official Odoo documentation URLs and does not require local
       "enabled": true,
       "environment": {
         "PYTHONPATH": "/home/user/odoo-dev-mcp",
-        "ODOO_VERSION": "19.0",
+        "ODOO_VERSION": "20.0",
         "LOG_LEVEL": "INFO"
       }
     }
@@ -629,7 +629,7 @@ mcp dev src/odoo_mcp/server.py
 
 | Task | Command |
 |------|---------|
-| Set version | `Set Odoo version to 19.0` |
+| Set version | `Set Odoo version to 20.0` |
 | Search docs | `Search documentation for "orm methods"` |
 | Get guidelines | `Get development guidelines for models` |
 | Create module | `Create module "name" with description...` |

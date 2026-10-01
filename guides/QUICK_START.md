@@ -43,7 +43,7 @@ In OpenCode, ask Claude:
 What's the current Odoo version?
 ```
 
-You should see: "Current Odoo development version: 19.0"
+You should see: "Current Odoo development version: 20.0"
 
 ## 💡 Common Commands
 
@@ -51,14 +51,14 @@ You should see: "Current Odoo development version: 19.0"
 ```
 Search Odoo documentation for "fields.Command"
 How do I link records using Many2many fields?
-Show me the ORM reference for Odoo 19.0
+Show me the ORM reference for Odoo 20.0
 Get documentation URL for reference/backend/orm
 Get Odoo local context
 ```
 
 ### Code Generation
 ```
-Set Odoo version to 19.0
+Set Odoo version to 20.0
 
 Create module "library_management" with display name "Library System"
 
@@ -86,7 +86,7 @@ Get development guidelines for models
 Review this Odoo code: [paste code]
 Debug this error: ValidationError in model creation
 Explain this Odoo error: [paste traceback]
-Create upgrade scripts for library_management from 17.0 to 19.0 with upgrade-util helper examples
+Create upgrade scripts for library_management from 17.0 to 20.0 with upgrade-util helper examples
 ```
 
 ## 🎯 Key Points
@@ -122,8 +122,8 @@ which uv
 ## 📖 Example Session
 
 ```
-You: Set Odoo version to 19.0
-Claude: Odoo version set to 19.0
+You: Set Odoo version to 20.0
+Claude: Odoo version set to 20.0
 
 You: How do I use fields.Command to link a record?
 Claude: [Searches the official reference catalog and provides Odoo documentation links]

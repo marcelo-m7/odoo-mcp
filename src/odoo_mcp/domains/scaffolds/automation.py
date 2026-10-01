@@ -142,11 +142,14 @@ def create_base_automation(
         warnings.append(f"Model XML ID guessed as `{model_ref}`. For dependency models, pass an explicit value such as `project.model_project_task` or `base.model_res_partner`.")
 
     version_notes = [
-        "Odoo 17 uses `tree` in views; Odoo 18/19 use `list`.",
+        "Odoo 17 uses `tree` in views; Odoo 18+ use `list`.",
         "Odoo 17/18 represent time-based 'before' delays with negative `trg_date_range`.",
         "Odoo 19 uses positive `trg_date_range` plus `trg_date_range_mode` (`before`/`after`).",
         "Creating or editing automations updates registry patches and may affect create/write/unlink/onchange behavior immediately after module update.",
     ]
+    security_file = "security/ir.access.csv" if automation_version == "20.0" else "security/ir.model.access.csv"
+    if automation_version == "20.0":
+        version_notes.insert(1, "Odoo 20 uses `ir.access` access rows with `operation` and `domain`, not older `ir.model.access`/record-rule snippets.")
 
     xml = f'''<odoo>
     <data noupdate="{data_noupdate}">
@@ -176,7 +179,7 @@ def create_base_automation(
 ```python
 'depends': ['base_automation'],
 'data': [
-    'security/ir.model.access.csv',
+    '{security_file}',
     'data/{xml_stem}.xml',
 ],
 ```

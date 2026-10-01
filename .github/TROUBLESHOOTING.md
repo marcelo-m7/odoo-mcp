@@ -195,7 +195,7 @@ packages = ["."]
 
 3. **Try explicit test:**
    Ask Claude: "What's the current Odoo version?"
-   Expected: "Current Odoo development version: 19.0"
+   Expected: "Current Odoo development version: 20.0"
 
 4. **Check MCP logs in OpenCode:**
    - Output panel > OpenCode

@@ -118,7 +118,20 @@ def plan_odoo_feature(feature_description: str, module_name: str = "", version: 
 
     model_stem = module_name.replace("_management", "").replace("_", ".")
     primary_model = f"{model_stem}.record" if "." not in model_stem else f"{model_stem}.record"
-    collection_view = "list" if plan_version in {"18.0", "19.0"} else "tree"
+    collection_view = "tree" if plan_version == "17.0" else "list"
+    security_file = "security/ir.access.csv" if plan_version == "20.0" else "security/ir.model.access.csv"
+    if plan_version == "20.0":
+        security_guidance = """- Add `security/ir.access.csv` for every new model.
+- Use `operation` letters (`c`, `r`, `u`, `d`) to grant create/read/update/delete.
+- Put row-level restrictions in the `domain` column on the relevant access row.
+- Use `base.group_everyone` for all-user grants; avoid empty groups except for intentional global restrictions.
+- Do not copy older `ir.model.access`/`perm_*` or separate `ir.rule` snippets into new Odoo 20 scaffolds."""
+    else:
+        security_guidance = """- Add `security/ir.model.access.csv` for every new model.
+- Decide whether normal internal users need read-only, create/write, or manager-only access.
+- Add record rules when users must only see own, company, portal, or team records.
+- Check `company_id`, default company behavior, domains, and cross-company reads/writes for business data.
+- Do not use `sudo()` to hide missing access design."""
     safe_description = feature_description[:80].replace("'", "\\'")
 
     doc_links = {
@@ -165,11 +178,7 @@ class {''.join(part.title() for part in primary_model.split('.'))}(models.Model)
 
 ## Security Pass
 
-- Add `security/ir.model.access.csv` for every new model.
-- Decide whether normal internal users need read-only, create/write, or manager-only access.
-- Add record rules when users must only see own, company, portal, or team records.
-- Check `company_id`, default company behavior, domains, and cross-company reads/writes for business data.
-- Do not use `sudo()` to hide missing access design.
+{security_guidance}
 
 ## View And Action Pass
 
@@ -196,11 +205,15 @@ create_odoo_view("{primary_model}", "{collection_view}", ["name", "active"])
 create_odoo_view("{primary_model}", "form", ["name", "active"])
 ```
 
+Security file for Odoo {plan_version}: `{security_file}`
+
 ## Official References
 
 """ + "\n".join(f"- {title}: {url}" for title, url in doc_links.items()) + "\n"
 
 def develop_odoo_feature(feature_description: str) -> str:
+    collection_view = "tree" if current_version["value"] == "17.0" else "list"
+    security_guidance = "Define access rights and row-level domains in `security/ir.access.csv`" if current_version["value"] == "20.0" else "Define access rights in CSV and add record rules if needed"
     return f"""I need to develop a new feature for Odoo {current_version['value']}:
 
 Feature: {feature_description}
@@ -213,13 +226,12 @@ Please help me following Odoo development guidelines:
    - Follow naming conventions (models use dots, fields use underscores)
    - Use proper field types and parameters
 
-2. Create the necessary views (form, tree, search)
+2. Create the necessary views (form, {collection_view}, search)
    - Follow view naming conventions
    - Use proper XML structure
 
 3. Set up security rules
-   - Define access rights in CSV
-   - Add record rules if needed
+   - {security_guidance}
 
 4. Implement any business logic needed
    - Use proper decorators (@api.depends, @api.constrains, etc.)
