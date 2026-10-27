@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import ipaddress
 import os
+import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Mapping
 from urllib.parse import urlsplit
 
@@ -35,6 +36,12 @@ def _https_url(value: str, name: str) -> str:
     except ValueError:
         if hostname == "localhost" or hostname.endswith(".localhost"):
             raise ValueError(f"{name} cannot use localhost") from None
+        if (
+            not re.fullmatch(r"[a-z0-9-]+(?:\.[a-z0-9-]+)+", hostname, re.IGNORECASE)
+            or hostname.endswith((".local", ".internal"))
+            or all(re.fullmatch(r"(?:0x[0-9a-f]+|[0-9]+)", label, re.IGNORECASE) for label in hostname.split("."))
+        ):
+            raise ValueError(f"{name} requires a public DNS-style hostname") from None
     else:
         raise ValueError(f"{name} must use a DNS hostname, not an IP literal")
     return value
@@ -46,7 +53,7 @@ class HostedConfig:
     issuer_url: str
     introspection_url: str
     client_id: str
-    client_secret: str
+    client_secret: str = field(repr=False)
     allowed_subjects: frozenset[str]
     scope: str
 
@@ -107,6 +114,14 @@ class IntrospectionTokenVerifier:
             claims = response.json()
             if not isinstance(claims, dict) or claims.get("active") is not True:
                 return None
+            # RFC 7662 can introspect refresh and sender-constrained tokens
+            # as well as ordinary bearer access tokens. This resource server
+            # has no proof-of-possession verification mechanism: fail closed.
+            token_type = claims.get("token_type")
+            if not isinstance(token_type, str) or token_type.casefold() != "bearer":
+                return None
+            if "cnf" in claims or ("token_use" in claims and claims["token_use"] != "access"):
+                return None
             if claims.get("iss") != self.config.issuer_url:
                 return None
             audience = claims.get("aud")
@@ -126,7 +141,10 @@ class IntrospectionTokenVerifier:
             if self.config.scope not in scopes:
                 return None
             expiry = claims.get("exp")
-            if type(expiry) is not int or expiry <= int(time.time()):
+            now = int(time.time())
+            if type(expiry) is not int or expiry <= now:
+                return None
+            if "nbf" in claims and (type(claims["nbf"]) is not int or claims["nbf"] > now):
                 return None
             client_id = claims.get("client_id")
             if not isinstance(client_id, str) or not client_id:

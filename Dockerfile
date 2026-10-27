@@ -1,11 +1,11 @@
-# Reproducible build: use the committed uv.lock and keep build tooling out
+# Dependency-locked build: use committed uv.lock and keep build tooling out
 # of the runtime image. FastMCP is pinned to the compatible 1.x SDK line.
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
 RUN pip install --no-cache-dir uv==0.13.4
 
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY src/ ./src/
 COPY docs/ ./docs/
 COPY rules/ ./rules/

@@ -32,6 +32,8 @@ def test_hosted_config_fails_closed_when_required_setting_missing(missing):
     ("MCP_OAUTH_ISSUER", "http://id.example.org/realm"),
     ("MCP_OAUTH_INTROSPECTION_URL", "http://id.example.org/token"),
     ("MCP_OAUTH_INTROSPECTION_URL", "https://127.0.0.1/introspect"),
+    ("MCP_OAUTH_INTROSPECTION_URL", "https://id.internal/introspect"),
+    ("MCP_PUBLIC_URL", "https://127.1/mcp"),
     ("MCP_OAUTH_ALLOWED_SUBJECTS", "  ,  "),
     ("MCP_OAUTH_REQUIRED_SCOPE", " "),
 ])
@@ -47,6 +49,11 @@ def test_hosted_config_uses_full_mcp_resource_url_and_explicit_owner():
     assert config.scope == "odoo:mcp"
 
 
+def test_hosted_config_repr_does_not_disclose_introspection_secret():
+    config = HostedConfig.from_env(VALID)
+    assert "private-secret" not in repr(config)
+
+
 def response_claims(**overrides):
     return {
         "active": True,
@@ -54,6 +61,7 @@ def response_claims(**overrides):
         "aud": [VALID["MCP_PUBLIC_URL"]],
         "sub": "operator-123",
         "client_id": "chatgpt-client",
+        "token_type": "Bearer",
         "scope": "openid odoo:mcp",
         "exp": int(time.time()) + 3600,
         **overrides,
@@ -88,6 +96,13 @@ async def test_introspection_accepts_only_active_correctly_scoped_token():
     {"exp": None},
     {"client_id": ""},
     {"sub": None},
+    {"token_type": "Refresh"},
+    {"token_type": "DPoP", "cnf": {"jkt": "sender-key-thumbprint"}},
+    {"token_type": None},
+    {"token_type": "Bearer", "cnf": {"x5t#S256": "client-certificate-thumbprint"}},
+    {"token_use": "refresh"},
+    {"nbf": int(time.time()) + 120},
+    {"nbf": "tomorrow"},
 ])
 async def test_introspection_denies_wrong_claims(rejected):
     async def handler(request):

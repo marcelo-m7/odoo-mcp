@@ -73,12 +73,14 @@ async def test_valid_oauth_token_can_initialize_mcp_but_unapproved_subject_canno
 
     async def introspect(request):
         assert request.method == "POST"
+        supplied = parse_qs(request.content.decode())["token"][0]
         return httpx.Response(200, json={
             "active": True,
             "iss": AUTH_ENV["MCP_OAUTH_ISSUER"],
             "aud": AUTH_ENV["MCP_PUBLIC_URL"],
-            "sub": "operator-123" if parse_qs(request.content.decode())["token"] == ["valid-token"] else "untrusted",
+            "sub": "operator-123" if supplied in {"valid-token", "dpop-token"} else "untrusted",
             "client_id": "chatgpt",
+            "token_type": "DPoP" if supplied == "dpop-token" else "Bearer",
             "scope": "odoo:mcp",
             "exp": int(time.time()) + 600,
         })
@@ -96,6 +98,10 @@ async def test_valid_oauth_token_can_initialize_mcp_but_unapproved_subject_canno
                     "Accept": "application/json, text/event-stream", "Authorization": "Bearer invalid-token",
                 })
                 assert bad.status_code == 401
+                unproven = await client.post("/mcp", json=payload, headers={
+                    "Accept": "application/json, text/event-stream", "Authorization": "Bearer dpop-token",
+                })
+                assert unproven.status_code == 401
                 accepted = await client.post("/mcp", json=payload, headers={
                     "Accept": "application/json, text/event-stream", "Authorization": "Bearer valid-token",
                 })

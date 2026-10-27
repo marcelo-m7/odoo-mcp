@@ -20,9 +20,11 @@ deployments, keys and policies for separate customers or trust boundaries.
    with matching discovery metadata.
 4. Give the MCP resource server a confidential OAuth introspection client:
    HTTP Basic client credentials for its RFC 7662 `introspection_endpoint`.
-   Introspection MUST return `active`, `iss`, `aud`, `sub`, `client_id`, `scope`,
-   and `exp` for issued access tokens. Not all identity providers return all
-   these claims by default; configure claim mappers or choose a compatible IdP.
+   Introspection MUST return `active`, `token_type=Bearer`, `iss`, `aud`, `sub`,
+   `client_id`, `scope`, and `exp` for issued access tokens. The server rejects
+   refresh tokens and sender-constrained tokens (e.g. DPoP/mTLS-bound). Not all
+   identity providers return these claims by default; configure claim mappers
+   or choose a compatible IdP.
    Tokens are rejected when even one check fails. Never use an IdP's **ID token**
    as a resource access token.
 5. Restrict the OAuth subject allowlist to your own stable IdP `sub` value.
@@ -94,13 +96,16 @@ the process fail at startup rather than accidentally publish anonymous tools.
    `WWW-Authenticate` header pointing to protected-resource metadata.
 4. Wrong/expired/revoked token, wrong issuer, audience, scope or `sub` → 401.
 5. Valid OAuth access token for the allowed subject and resource → MCP
-   `initialize`, `tools/list`, harmless `odoo_list_connections` and bounded
+   `initialize`, `tools/list`, harmless `odoo_instance_list` and bounded
    read-only calls succeed. The IdP must allow the ChatGPT client flow.
 6. Confirm writes denied unless explicitly allowed by the Odoo MCP policy.
    Run write-flow tests **only in a dedicated staging database**.
 7. Check Coolify secrets are masked, logs have no tokens, and there are no
    unprotected host ports. Confirm egress firewall permits only required Odoo
    and IdP hosts; outbound DNS TOCTOU risk remains for Odoo connections.
+8. Enforce edge request-rate/concurrency limits at the Coolify reverse proxy
+   or upstream WAF, especially for unauthenticated requests that would trigger
+   an IdP introspection call. Alert on unusual 401/429 patterns.
 
 Quick anonymous checks (safe):
 
