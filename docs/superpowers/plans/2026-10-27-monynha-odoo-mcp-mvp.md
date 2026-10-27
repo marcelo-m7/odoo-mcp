@@ -77,12 +77,12 @@
 **Interfaces:**
 - `OperationError(code: str, message: str, *, retryable: bool = False)`.
 - `public_error(exc: Exception) -> dict[str, object]` returns stable `{"success": false, "error": {"code": ..., "message": ..., "retryable": ...}}` without raw response bodies.
-- `Policy(allowed_writes: Mapping[str, frozenset[str]] | None = None)`.
+- `Policy(allowed_writes: Mapping[str, frozenset[str]] | None = None)` and `Policy.from_json(raw: str | None) -> Policy`; the latter parses `ODOO_MCP_WRITE_POLICY_JSON`, rejects unknown verbs and produces read-only default.
 - `Policy.authorize(model: str, action: Literal["read", "create", "write", "unlink", "aggregate"]) -> None`; rejects `_*`/administrative models by default, reads on approved non-system models, writes only with grants.
 
-- [ ] **Step 1: Write failing tests** for read access, denied writes, model-scoped grant, administrative model denial, 401 exception redaction and secrets in an Odoo traceback.
+- [ ] **Step 1: Write failing tests** for read access, denied writes, model-scoped grant, rejected malformed/unknown policy verbs, administrative model denial, 401 exception redaction and secrets in an Odoo traceback.
 - [ ] **Step 2: Run** `uv run pytest tests/operations/test_policy.py -q`; expected FAIL.
-- [ ] **Step 3: Implement** `OperationError`, safe error normalization, and policy; raw exceptions may be retained internally only with an explicit redacting logger.
+- [ ] **Step 3: Implement** `OperationError`, safe error normalization, and policy parsing; raw exceptions may be retained internally only with an explicit redacting logger.
 - [ ] **Step 4: Run** same tests; expected PASS.
 - [ ] **Step 5: Commit** `git add src/odoo_mcp/operations tests/operations/test_policy.py && git commit -m "feat: enforce Odoo operation policies"`.
 
@@ -173,7 +173,7 @@
 - `register_operations(mcp: FastMCP, service: OdooService, registry: ConnectionRegistry) -> None`.
 - Tool names: `odoo_instance_list`, `odoo_server_info`, `odoo_model_list`, `odoo_fields_get`, `odoo_record_search`, `odoo_record_get`, `odoo_record_aggregate`, `odoo_record_create`, `odoo_record_update`, `odoo_record_delete`.
 - Resource templates `odoo://{model}/record/{record_id}`, `odoo://{model}/fields`, `odoo://{model}/count` only if exactly one connection is available. In multi-connection mode rely on explicit tool arguments; no ambiguous resources.
-- Server hook reads `ODOO_MCP_OPERATIONS_ENABLED=1`; when absent, no new tools or network calls.
+- Server hook reads `ODOO_MCP_OPERATIONS_ENABLED=1`, parses `ODOO_MCP_CONNECTIONS_JSON` with `ConnectionRegistry.from_json` and `ODOO_MCP_WRITE_POLICY_JSON` with `Policy.from_json`; when disabled, no new tools or network calls.
 
 - [ ] **Step 1: Write failing tests** checking existing FastMCP tool names and prompt/resource inventory unchanged when disabled, operations names when enabled, zero startup network calls, explicit connection routing and ambiguous resource omission.
 - [ ] **Step 2: Run** `uv run pytest tests/operations/test_registration.py -q`; expected FAIL.
