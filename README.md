@@ -8,6 +8,11 @@ tools are unchanged by default. See the
 [Remote Operations configuration and safety guide](docs/operations/README.md)
 for API-key references, permissions, supported operations and test commands.
 
+**Hosted deployment:** [Docker + Coolify (OAuth 2.1 protected MCP)](docs/operations/COOLIFY.md)
+provides the opt-in single-operator Streamable HTTP configuration. Remote HTTP
+fails closed unless external OAuth introspection, audience, scope and user
+allowlist are configured. The local `stdio` behavior is unchanged.
+
 **🚀 [Quick Start](guides/QUICK_START.md)** | **📖 [OpenCode Setup](guides/OPENCODE_SETUP.md)** | **🧪 [Testing Guide](guides/TESTING.md)** | **🔧 [Troubleshooting](.github/TROUBLESHOOTING.md)** | **📋 [Guides Index](guides/README.md)** | **📝 [Changelog](CHANGELOG.md)**
 
 ## Features

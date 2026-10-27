@@ -1,0 +1,37 @@
+# Alternative to Coolify's Dockerfile build. For Coolify, attach an HTTPS
+# domain to service `mcp`, internal port 8000. Keep runtime secrets in Coolify.
+services:
+  mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,noexec,nosuid
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      ODOO_MCP_TRANSPORT: streamable-http
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:?MCP_PUBLIC_URL is required}
+      MCP_OAUTH_ISSUER: ${MCP_OAUTH_ISSUER:?MCP_OAUTH_ISSUER is required}
+      MCP_OAUTH_INTROSPECTION_URL: ${MCP_OAUTH_INTROSPECTION_URL:?MCP_OAUTH_INTROSPECTION_URL is required}
+      MCP_OAUTH_CLIENT_ID: ${MCP_OAUTH_CLIENT_ID:?MCP_OAUTH_CLIENT_ID is required}
+      MCP_OAUTH_CLIENT_SECRET: ${MCP_OAUTH_CLIENT_SECRET:?MCP_OAUTH_CLIENT_SECRET is required}
+      MCP_OAUTH_ALLOWED_SUBJECTS: ${MCP_OAUTH_ALLOWED_SUBJECTS:?MCP_OAUTH_ALLOWED_SUBJECTS is required}
+      MCP_OAUTH_REQUIRED_SCOPE: ${MCP_OAUTH_REQUIRED_SCOPE:?MCP_OAUTH_REQUIRED_SCOPE is required}
+      ODOO_MCP_OPERATIONS_ENABLED: ${ODOO_MCP_OPERATIONS_ENABLED:-0}
+      ODOO_MCP_CONNECTIONS_JSON: ${ODOO_MCP_CONNECTIONS_JSON:-}
+      ODOO_MCP_WRITE_POLICY_JSON: ${ODOO_MCP_WRITE_POLICY_JSON:-}
+      ODOO_FACODI_API_KEY: ${ODOO_FACODI_API_KEY:-}
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).close()"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3

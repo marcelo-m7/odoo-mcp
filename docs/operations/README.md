@@ -1,8 +1,9 @@
 # Remote Odoo Operations (optional MVP)
 
 The development MCP remains the default. Remote ERP tools are **disabled** until
-explicitly enabled for a trusted local MCP client. This is not yet an
-authenticated multi-tenant hosted service.
+explicitly enabled for a trusted MCP client. An opt-in, authenticated
+**single-operator** HTTP container is documented in [Coolify deployment](COOLIFY.md).
+It is **not** an authenticated multi-tenant hosted service.
 
 ## Configuration
 
@@ -99,9 +100,11 @@ connection is necessary for the offline suite.
   atomic by default.
 - There is no arbitrary model-method executor, payment posting, app installation,
   email sending, import/upsert or wizard completion in this MVP.
-- The current stdio configuration trusts the local process owner. Do not expose
-  Streamable HTTP to other users until authenticated gateway and tenant isolation
-  controls are built and audited.
+- The stdio configuration trusts the local process owner. The optional HTTP
+  transport uses an external OAuth authorization server and per-request token
+  introspection for explicitly allowlisted operator subjects; it shares all
+  configured connections between those subjects. Do not use it as a
+  multi-tenant/customer gateway until proper tenant isolation is built and audited.
 - Connections are configured once at startup. Changing a secret means updating
   the external secret and restarting the relevant MCP process; use dedicated
   API keys per integration and rotate/revoke them in Odoo.
