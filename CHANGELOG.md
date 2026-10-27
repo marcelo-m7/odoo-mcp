@@ -5,6 +5,52 @@ All notable changes to the Odoo Development MCP Server will be documented in thi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `detect_odoo_version` tool to report likely local Odoo versions from environment variables, `release.py`, addon manifests, and branch names without changing the active MCP version.
+- `inspect_odoo_source` tool to read Odoo core and addon source with AST and return compact summaries of manifests, models, controllers, routes, imports, parse issues, and suggested next reads.
+
+### Changed
+
+- Odoo 20.0 is now a first-class supported/default version, not just a documented version string.
+- Odoo 20.0 scaffolds now use `list` views, `security/ir.access.csv` with `operation` and `domain`, and OWL 3 `useProps(...)` guidance instead of older `tree`, `ir.model.access`, `perm_*`, `ir.rule`, or static OWL props patterns.
+
+## [1.2.0] - 2026-05-08
+
+### Added
+
+- Local Odoo environment context support through `ODOO_SOURCE`, `ODOO_BASE_COMMAND`, and `ODOO_TOOL_README`, exposed via `get_odoo_local_context()` and `odoo://local/context`.
+- OWL frontend planning and scaffold tools for Odoo components, client actions, field widgets, services, and Hoot tests.
+- Export/import/test coverage for the new OWL tool set.
+
+### Fixed
+
+- Redact sensitive local command and README values from local context output.
+- Escape generated OWL JavaScript/XML snippets and avoid undeclared default test props.
+- Detect nested local Odoo source layouts such as `odoo*/odoo-bin` and `enterprise-*`.
+
+## [1.1.0] - 2026-05-08
+
+### Changed
+
+- Documentation tools now prefer official Odoo developer reference URLs using `https://www.odoo.com/documentation/<version>/developer/reference.html`.
+- `search_documentation` now searches a built-in official reference catalog and returns stable Odoo documentation links instead of reading local `.rst` files.
+- Generated module, model, view, security, and prompt outputs now point to official Odoo documentation URLs.
+- `create_odoo_view` now generates version-aware collection views (`tree` for 17.0, `list` for 18.0/19.0), avoids fake menu parents, and includes view/action/security/test guardrails.
+
+### Added
+
+- `get_documentation_url` tool for direct official Odoo documentation URL lookup.
+- `plan_odoo_feature` tool for skill-informed implementation plans covering models, views, security, tests, and official references.
+- `create_base_automation` tool for version-aware automated action XML using `base.automation` and linked `ir.actions.server` records.
+- `layout_module_dependencies` tool for ordering and explaining Odoo manifest dependencies.
+- `create_upgrade_script` tool for version-aware `pre-migration.py`, `post-migration.py`, and `end-migration.py` scaffolds.
+- `create_upgrade_script` now includes verified `odoo.upgrade.util` examples for model, field, XML ID, module, SQL, and ORM migration helpers.
+- `explain_odoo_error` tool for patterned Odoo traceback diagnosis with likely area, root cause, minimal reproduction, and docs links.
+- Anchored documentation shortcuts for common Odoo topics like computed fields, record rules, access rights, controllers, testing, OWL, and upgrade scripts.
+
 ## [1.0.0] - 2026-02-27
 
 ### Added
@@ -22,7 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `get_development_guidelines`: Access coding standards and best practices
 - `create_odoo_module`: Generate complete Odoo module scaffolding
 - `create_odoo_model`: Create Odoo models with fields and validation
-- `create_odoo_view`: Generate Odoo views (form, tree, search, kanban)
+- `create_odoo_view`: Generate Odoo views (form, collection, search, kanban)
 - `create_security_rules`: Create security rules (ir.model.access.csv, record rules)
 
 #### Resources (3 total)

@@ -21,7 +21,10 @@ Edit `~/.opencode/config.jsonc`:
       "command": ["uv", "run", "/absolute/path/to/odoo-dev-mcp/src/odoo_mcp/server.py"],
       "enabled": true,
       "environment": {
-        "PATH": "/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin"
+        "PATH": "/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin",
+        "ODOO_SOURCE": "/path/to/odoo",
+        "ODOO_BASE_COMMAND": "/path/to/odoo/odoo-bin -c /path/to/odoo.conf --addons-path=/path/to/addons",
+        "ODOO_TOOL_README": "/path/to/local-development/README.md"
       }
     }
   }
@@ -40,7 +43,7 @@ In OpenCode, ask Claude:
 What's the current Odoo version?
 ```
 
-You should see: "Current Odoo development version: 19.0"
+You should see: "Current Odoo development version: 20.0"
 
 ## 💡 Common Commands
 
@@ -48,12 +51,14 @@ You should see: "Current Odoo development version: 19.0"
 ```
 Search Odoo documentation for "fields.Command"
 How do I link records using Many2many fields?
-Show me the ORM reference for Odoo 19.0
+Show me the ORM reference for Odoo 20.0
+Get documentation URL for reference/backend/orm
+Get Odoo local context
 ```
 
 ### Code Generation
 ```
-Set Odoo version to 19.0
+Set Odoo version to 20.0
 
 Create module "library_management" with display name "Library System"
 
@@ -65,6 +70,14 @@ Create model library.book with fields:
 Create form view for library.book
 
 Create security rules for library.book in library_management
+
+Layout module dependencies for library_management with chatter and automated actions
+
+Create a base automation for library.book that runs on create or write and watches available
+
+Create an OWL component called Book Dashboard in library_management with orm service and local state
+
+Create an OWL client action called Book Dashboard in library_management
 ```
 
 ### Development Help
@@ -72,6 +85,8 @@ Create security rules for library.book in library_management
 Get development guidelines for models
 Review this Odoo code: [paste code]
 Debug this error: ValidationError in model creation
+Explain this Odoo error: [paste traceback]
+Create upgrade scripts for library_management from 17.0 to 20.0 with upgrade-util helper examples
 ```
 
 ## 🎯 Key Points
@@ -79,7 +94,7 @@ Debug this error: ValidationError in model creation
 1. **No @ mentions needed** - Just talk to Claude naturally
 2. **Tools work everywhere** - Available in all OpenCode sessions
 3. **Version-aware** - Set your Odoo version once, all code adapts
-4. **Full documentation** - 300+ Odoo docs files searchable
+4. **Official documentation links** - Uses `https://www.odoo.com/documentation/<version>/developer/reference.html`
 5. **Best practices** - Auto-included in generated code
 
 ## 📚 More Help
@@ -107,11 +122,11 @@ which uv
 ## 📖 Example Session
 
 ```
-You: Set Odoo version to 19.0
-Claude: Odoo version set to 19.0
+You: Set Odoo version to 20.0
+Claude: Odoo version set to 20.0
 
 You: How do I use fields.Command to link a record?
-Claude: [Searches documentation and provides answer with examples]
+Claude: [Searches the official reference catalog and provides Odoo documentation links]
 
 You: Create a model task.task with name and priority fields
 Claude: [Generates model with proper naming conventions and documentation links]
@@ -123,9 +138,11 @@ Claude: [Reviews against Odoo best practices and suggests improvements]
 ## 🎉 You're Ready!
 
 Start building Odoo modules with AI assistance. The server provides:
-- ✅ Smart documentation search
+- ✅ Smart official documentation link search
 - ✅ Version-aware code generation  
 - ✅ Best practices enforcement
+- ✅ Dependency ordering help
+- ✅ Version-aware automated action scaffolds
 - ✅ Naming convention warnings
 - ✅ Complete development workflows
 

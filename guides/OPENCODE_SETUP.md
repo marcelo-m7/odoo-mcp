@@ -69,7 +69,10 @@ Create or edit your OpenCode configuration file:
       "command": ["uv", "run", "/absolute/path/to/odoo-dev-mcp/src/odoo_mcp/server.py"],
       "enabled": true,
       "environment": {
-        "PATH": "/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin"
+        "PATH": "/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin",
+        "ODOO_SOURCE": "/path/to/odoo",
+        "ODOO_BASE_COMMAND": "/path/to/odoo/odoo-bin -c /path/to/odoo.conf --addons-path=/path/to/addons",
+        "ODOO_TOOL_README": "/path/to/local-development/README.md"
       }
     }
   }
@@ -79,6 +82,7 @@ Create or edit your OpenCode configuration file:
 **Important**: 
 - Replace `/absolute/path/to/odoo-dev-mcp` with your actual path
 - Replace `/home/user` in PATH with your actual home directory path
+- Replace the optional `ODOO_*` values with your local Odoo source, command template, and local tooling README paths
 - Use absolute paths (no `~` or relative paths)
 
 #### Configuration Option B: Using Python directly
@@ -92,7 +96,10 @@ Create or edit your OpenCode configuration file:
       "command": ["python3", "/absolute/path/to/odoo-dev-mcp/src/odoo_mcp/server.py"],
       "enabled": true,
       "environment": {
-        "PYTHONPATH": "/absolute/path/to/odoo-dev-mcp"
+        "PYTHONPATH": "/absolute/path/to/odoo-dev-mcp",
+        "ODOO_SOURCE": "/path/to/odoo",
+        "ODOO_BASE_COMMAND": "/path/to/odoo/odoo-bin -c /path/to/odoo.conf --addons-path=/path/to/addons",
+        "ODOO_TOOL_README": "/path/to/local-development/README.md"
       }
     }
   }
@@ -133,13 +140,14 @@ The MCP server tools are automatically available to Claude in OpenCode. You can 
 
 #### 1. Set Odoo Version
 ```
-Set Odoo version to 19.0
+Set Odoo version to 20.0
 ```
 
 #### 2. Search Documentation
 ```
 Search Odoo documentation for "computed fields"
 How do I use fields.Command to link records?
+Get documentation URL for reference/backend/orm
 ```
 
 #### 3. Get Development Guidelines
@@ -183,6 +191,7 @@ MCP resources are available through natural language requests:
 ```
 Show me the ORM documentation for Odoo 19.0
 Access odoo://docs/19.0/reference/backend/orm
+Get documentation URL for reference/backend/security in Odoo 19.0
 ```
 
 #### Development Rules
@@ -241,12 +250,12 @@ If you work with multiple Odoo versions, you can create separate server instance
         "DEFAULT_ODOO_VERSION": "17.0"
       }
     },
-    "odoo-19": {
+    "odoo-20": {
       "type": "local",
       "command": ["python", "/path/to/odoo-dev-mcp/src/odoo_mcp/server.py"],
       "enabled": true,
       "environment": {
-        "DEFAULT_ODOO_VERSION": "19.0"
+        "DEFAULT_ODOO_VERSION": "20.0"
       }
     }
   }
@@ -288,7 +297,7 @@ Create `.opencode.jsonc` in your Odoo project workspace:
       "command": ["python", "${workspaceFolder}/../odoo-dev-mcp/src/odoo_mcp/server.py"],
       "enabled": true,
       "environment": {
-        "ODOO_VERSION": "19.0"
+        "ODOO_VERSION": "20.0"
       }
     }
   }
@@ -299,9 +308,10 @@ Create `.opencode.jsonc` in your Odoo project workspace:
 
 ### Scenario: Creating a Library Management Module
 
-#### Step 1: Set Version
+#### Step 1: Detect and Set Version
 ```
-Set version to 19.0
+Detect Odoo version for this workspace
+Set version to 20.0
 ```
 
 #### Step 2: Get Guidelines
@@ -340,7 +350,7 @@ Create form view for library.book with all fields
 ```
 
 ```
-Create tree view for library.book with fields: 
+Create list view for library.book with fields:
 title, author_id, isbn, available
 ```
 
@@ -358,7 +368,16 @@ Create security rules for library.book in library_management
 Create security rules for library.category in library_management
 ```
 
-#### Step 7: Review Generated Code
+#### Step 7: Add Automation
+```
+Create a base automation for library.book that runs on create or write, watches available, and posts a message when availability changes
+```
+
+```
+Layout module dependencies for library_management with chatter, automated actions, and website portal integration
+```
+
+#### Step 8: Review Generated Code
 ```
 Review this code: [paste generated model code]
 ```
@@ -371,6 +390,7 @@ The MCP tools are automatically available to Claude in OpenCode. Just ask natura
 Search Odoo documentation for "Many2many fields"
 Create an Odoo module for inventory management
 How do I use fields.Command?
+Get documentation URL for reference/backend/orm
 ```
 
 ### 2. Reference Resources
@@ -462,16 +482,15 @@ Create model test.model with name field
 
 ### Documentation Not Found
 
-1. **Verify docs Directory**
-   ```bash
-   ls /path/to/odoo-dev-mcp/docs/
-   # Should show: 17.0/ 18.0/ 19.0/
+The server points to official Odoo documentation URLs and does not require local docs for normal use.
+
+1. **Test official documentation URLs**
+   ```
+   Get documentation URL for reference/backend/orm in Odoo 19.0
    ```
 
-2. **Check Permissions**
-   ```bash
-   chmod -R 755 /path/to/odoo-dev-mcp/docs/
-   ```
+2. **Check the base URL pattern**
+   `https://www.odoo.com/documentation/<version>/developer/reference.html`
 
 ### Rules Not Loading
 
@@ -513,7 +532,7 @@ Create model test.model with name field
       "enabled": true,
       "environment": {
         "PYTHONPATH": "/home/user/odoo-dev-mcp",
-        "ODOO_VERSION": "19.0",
+        "ODOO_VERSION": "20.0",
         "LOG_LEVEL": "INFO"
       }
     }
@@ -540,19 +559,37 @@ Create model test.model with name field
 
 ## Features Available in OpenCode
 
-### All 8 Tools
+This MCP server works especially well alongside the companion Odoo skills repo at [mart337i/odoo-skills](https://github.com/mart337i/odoo-skills). Keep using those skills for deeper Odoo workflows; this server supplies version-aware tools and official documentation links that complement them without requiring the skills repo at runtime.
+
+### All 23 Tools
 ✅ `set_odoo_version` - Version switching
 ✅ `get_current_version` - Version check
-✅ `search_documentation` - Doc search
+✅ `detect_odoo_version` - Read-only local Odoo version detection
+✅ `inspect_odoo_source` - AST source inspection for Odoo core and addons
+✅ `get_odoo_local_context` - Local Odoo source, command, and tooling README context
+✅ `get_documentation_url` - Official Odoo documentation URL lookup
+✅ `search_documentation` - Official reference catalog search
 ✅ `get_development_guidelines` - Get rules
+✅ `explain_odoo_error` - Patterned Odoo traceback diagnosis
+✅ `create_upgrade_script` - Version-aware migration script scaffolding
+✅ `plan_odoo_feature` - Skill-informed implementation planning
+✅ `plan_owl_feature` - OWL frontend implementation planning
+✅ `layout_module_dependencies` - Manifest dependency ordering
 ✅ `create_odoo_module` - Module generation
 ✅ `create_odoo_model` - Model creation
-✅ `create_odoo_view` - View generation
+✅ `create_odoo_view` - Safer version-aware view generation
 ✅ `create_security_rules` - Security setup
+✅ `create_base_automation` - Version-aware automated action XML
+✅ `create_owl_component` - OWL component JS/XML/SCSS scaffolding
+✅ `create_owl_client_action` - OWL client action and `ir.actions.client` scaffolding
+✅ `create_owl_field_widget` - OWL field widget scaffolding
+✅ `create_owl_service` - Odoo frontend service scaffolding
+✅ `create_owl_test` - OWL/Hoot frontend test scaffolding
 
 ### All 6 Resources
-✅ `odoo://docs/{version}/index` - Doc index
-✅ `odoo://docs/{version}/{path}` - Specific docs
+✅ `odoo://local/context` - Local Odoo source, command, and tooling README context
+✅ `odoo://docs/{version}/index` - Official developer reference index
+✅ `odoo://docs/{version}/{path}` - Official documentation URL and metadata
 ✅ `odoo://rules/clean-code` - Clean code rules
 ✅ `odoo://rules/odoo-development` - Odoo standards
 ✅ `odoo://rules/all` - All guidelines
@@ -592,7 +629,7 @@ mcp dev src/odoo_mcp/server.py
 
 | Task | Command |
 |------|---------|
-| Set version | `Set Odoo version to 19.0` |
+| Set version | `Set Odoo version to 20.0` |
 | Search docs | `Search documentation for "orm methods"` |
 | Get guidelines | `Get development guidelines for models` |
 | Create module | `Create module "name" with description...` |
