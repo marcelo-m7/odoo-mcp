@@ -70,6 +70,24 @@ def test_no_automatic_retry(monkeypatch):
     assert count == 1
 
 
+@pytest.mark.parametrize("status", [429, 502, 503, 504])
+@pytest.mark.parametrize("method", ["create", "write", "unlink"])
+def test_uncertain_mutation_http_error_must_not_recommend_retry(monkeypatch, status, method):
+    """A proxy error may arrive after Odoo has already committed a mutation."""
+    connection = backend(monkeypatch, lambda request: httpx.Response(status, text="upstream error"))
+    with pytest.raises(OperationError) as caught:
+        connection.call("res.partner", method, ids=[9] if method != "create" else None)
+    assert caught.value.retryable is False
+
+
+@pytest.mark.parametrize("status", [429, 502, 503, 504])
+def test_transient_read_http_error_remains_retryable(monkeypatch, status):
+    connection = backend(monkeypatch, lambda request: httpx.Response(status, text="upstream error"))
+    with pytest.raises(OperationError) as caught:
+        connection.call("res.partner", "search_read", kwargs={"domain": []})
+    assert caught.value.retryable is True
+
+
 @pytest.mark.parametrize("model,method", [("res.partner/../../attack", "read"), ("res.partner", "_sudo"), ("", "read")])
 def test_invalid_method_path_is_rejected(monkeypatch, model, method):
     with pytest.raises(OperationError, match="Invalid"):

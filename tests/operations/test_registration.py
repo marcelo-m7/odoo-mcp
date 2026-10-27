@@ -41,6 +41,24 @@ def test_read_resources_registered_only_for_single_connection():
     assert len(two._resource_manager._templates) == 0
 
 
+@pytest.mark.asyncio
+async def test_count_resource_preserves_delegated_policy_error():
+    mcp, _, _ = setup_mcp()
+    contents = await mcp.read_resource("odoo://res.users/count")
+    response = json.loads(contents[0].content)
+    assert response["success"] is False
+    assert response["error"]["code"] == "forbidden_model"
+    assert response["error"]["retryable"] is False
+    assert "total" not in response
+
+
+@pytest.mark.asyncio
+async def test_count_resource_returns_total_on_success():
+    mcp, _, _ = setup_mcp()
+    contents = await mcp.read_resource("odoo://res.partner/count")
+    assert json.loads(contents[0].content) == {"success": True, "total": 2}
+
+
 def test_tool_invocation_routes_to_explicit_connection():
     mcp, _, backends = setup_mcp(two=True)
     tool = mcp._tool_manager.get_tool("odoo_record_search")

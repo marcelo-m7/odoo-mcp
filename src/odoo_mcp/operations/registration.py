@@ -101,4 +101,6 @@ def register_operations(mcp: FastMCP, service: OdooService, registry: Connection
         @mcp.resource("odoo://{model}/count")
         async def odoo_count_resource(model: str) -> str:
             response = await odoo_record_search(model, limit=1, fields=["id"])
-            return json.dumps({"success": response["success"], "total": response.get("data", {}).get("total")})
+            if not response["success"]:
+                return json.dumps(response)
+            return json.dumps({"success": True, "total": response["data"]["total"]})

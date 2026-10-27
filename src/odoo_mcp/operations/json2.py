@@ -13,6 +13,7 @@ from .errors import OperationError
 
 _MODEL_NAME = re.compile(r"^[a-z][a-z0-9_.]*$")
 _METHOD_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
+_RETRYABLE_READ_METHODS = frozenset({"read", "search_read", "search_count", "fields_get", "read_group"})
 _ERRORS = {
     400: ("odoo_bad_request", "Odoo rejected the request"),
     401: ("odoo_auth", "Odoo authentication failed"),
@@ -54,7 +55,7 @@ class Json2Backend:
                 headers=headers, json=params, timeout=20.0, follow_redirects=False,
             )
         except (httpx.TimeoutException, httpx.TransportError) as exc:
-            retryable = method in ("read", "search_read", "search_count", "fields_get", "read_group")
+            retryable = method in _RETRYABLE_READ_METHODS
             raise OperationError("odoo_unavailable", "Odoo is unavailable; the operation outcome may be unknown", retryable=retryable) from None
         except ValueError:
             raise OperationError("invalid_destination", "Odoo connection destination is unsafe or unavailable") from None
@@ -62,7 +63,8 @@ class Json2Backend:
             raise OperationError("odoo_redirect", "Odoo redirect was refused")
         if response.status_code >= 400:
             code, message = _ERRORS.get(response.status_code, ("odoo_unavailable", "Odoo request failed"))
-            raise OperationError(code, message, retryable=response.status_code in (429, 502, 503, 504))
+            retryable = method in _RETRYABLE_READ_METHODS and response.status_code in (429, 502, 503, 504)
+            raise OperationError(code, message, retryable=retryable)
         try:
             return response.json()
         except ValueError:
