@@ -2,6 +2,12 @@
 
 A Model Context Protocol (MCP) server for Odoo module development with AI assistance. Provides version-aware official documentation links (17.0, 18.0, 19.0, 20.0), intelligent code generation, and development workflow automation.
 
+**New (opt-in):** This repository also provides a foundation for remote Odoo
+ERP operations using JSON-2 or explicit legacy XML-RPC. The existing developer
+tools are unchanged by default. See the
+[Remote Operations configuration and safety guide](docs/operations/README.md)
+for API-key references, permissions, supported operations and test commands.
+
 **🚀 [Quick Start](guides/QUICK_START.md)** | **📖 [OpenCode Setup](guides/OPENCODE_SETUP.md)** | **🧪 [Testing Guide](guides/TESTING.md)** | **🔧 [Troubleshooting](.github/TROUBLESHOOTING.md)** | **📋 [Guides Index](guides/README.md)** | **📝 [Changelog](CHANGELOG.md)**
 
 ## Features

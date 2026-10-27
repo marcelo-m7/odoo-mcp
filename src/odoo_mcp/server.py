@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import os
 from typing import Any
 
 from mcp.server.fastmcp import FastMCP
@@ -21,6 +22,32 @@ from .schemas.version import VersionDetectionRequest
 
 
 mcp = FastMCP("Odoo Development Assistant")
+
+
+def _register_optional_operations() -> None:
+    """Keep all existing development features working with operations disabled."""
+    if os.environ.get("ODOO_MCP_OPERATIONS_ENABLED") != "1":
+        return
+    from .operations.backends import make_backend
+    from .operations.config import ConnectionRegistry, EnvironmentCredentials
+    from .operations.policy import Policy
+    from .operations.registration import register_operations
+    from .operations.service import OdooService
+
+    registry = ConnectionRegistry.from_json(
+        os.environ.get("ODOO_MCP_CONNECTIONS_JSON", ""),
+        allow_local=os.environ.get("ODOO_MCP_ALLOW_LOCAL") == "1",
+    )
+    credentials = EnvironmentCredentials()
+    policy = Policy.from_json(os.environ.get("ODOO_MCP_WRITE_POLICY_JSON"))
+    backends = {}
+
+    def backend_for(connection):
+        if connection.id not in backends:
+            backends[connection.id] = make_backend(connection, credentials)
+        return backends[connection.id]
+
+    register_operations(mcp, OdooService(registry, backend_for, policy), registry)
 
 get_all_rst_files = docs_facade.get_all_rst_files
 normalize_reference_path = docs_facade.normalize_reference_path
@@ -390,6 +417,9 @@ def main():
     except Exception as e:
         print(f"\nServer error: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+_register_optional_operations()
 
 
 if __name__ == "__main__":
