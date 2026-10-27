@@ -21,7 +21,43 @@ from .schemas.source_inspection import SourceInspectionRequest
 from .schemas.version import VersionDetectionRequest
 
 
-mcp = FastMCP("Odoo Development Assistant")
+def build_mcp() -> FastMCP:
+    """Use local stdio by default; hosted HTTP cannot exist without OAuth."""
+    transport = os.environ.get("ODOO_MCP_TRANSPORT", "stdio")
+    if transport != "streamable-http":
+        if transport != "stdio":
+            raise ValueError("ODOO_MCP_TRANSPORT must be stdio or streamable-http")
+        return FastMCP("Odoo Development Assistant")
+
+    from urllib.parse import urlsplit
+
+    from mcp.server.auth.settings import AuthSettings
+    from mcp.server.transport_security import TransportSecuritySettings
+    from pydantic import AnyHttpUrl
+
+    from .hosted_auth import HostedConfig, IntrospectionTokenVerifier
+
+    config = HostedConfig.from_env()
+    domain = urlsplit(config.resource_url).hostname
+    return FastMCP(
+        "Monynha Odoo MCP",
+        stateless_http=True,
+        json_response=True,
+        auth=AuthSettings(
+            issuer_url=AnyHttpUrl(config.issuer_url),
+            resource_server_url=AnyHttpUrl(config.resource_url),
+            required_scopes=[config.scope],
+        ),
+        token_verifier=IntrospectionTokenVerifier(config),
+        transport_security=TransportSecuritySettings(
+            enable_dns_rebinding_protection=True,
+            allowed_hosts=[domain, f"{domain}:*", "localhost:*", "127.0.0.1:*"],
+            allowed_origins=[f"https://{domain}", "https://chatgpt.com"],
+        ),
+    )
+
+
+mcp = build_mcp()
 
 
 def _register_optional_operations() -> None:
